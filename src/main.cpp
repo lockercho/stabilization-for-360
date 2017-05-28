@@ -1,311 +1,259 @@
+
+/* Copyright (c) Mark J. Kilgard, 1994. */
+
+/**
+ * (c) Copyright 1993, Silicon Graphics, Inc.
+ * ALL RIGHTS RESERVED
+ * Permission to use, copy, modify, and distribute this software for
+ * any purpose and without fee is hereby granted, provided that the above
+ * copyright notice appear in all copies and that both the copyright notice
+ * and this permission notice appear in supporting documentation, and that
+ * the name of Silicon Graphics, Inc. not be used in advertising
+ * or publicity pertaining to distribution of the software without specific,
+ * written prior permission.
+ *
+ * THE MATERIAL EMBODIED ON THIS SOFTWARE IS PROVIDED TO YOU "AS-IS"
+ * AND WITHOUT WARRANTY OF ANY KIND, EXPRESS, IMPLIED OR OTHERWISE,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY OR
+ * FITNESS FOR A PARTICULAR PURPOSE.  IN NO EVENT SHALL SILICON
+ * GRAPHICS, INC.  BE LIABLE TO YOU OR ANYONE ELSE FOR ANY DIRECT,
+ * SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY
+ * KIND, OR ANY DAMAGES WHATSOEVER, INCLUDING WITHOUT LIMITATION,
+ * LOSS OF PROFIT, LOSS OF USE, SAVINGS OR REVENUE, OR THE CLAIMS OF
+ * THIRD PARTIES, WHETHER OR NOT SILICON GRAPHICS, INC.  HAS BEEN
+ * ADVISED OF THE POSSIBILITY OF SUCH LOSS, HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE
+ * POSSESSION, USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * US Government Users Restricted Rights
+ * Use, duplication, or disclosure by the Government is subject to
+ * restrictions set forth in FAR 52.227.19(c)(2) or subparagraph
+ * (c)(1)(ii) of the Rights in Technical Data and Computer Software
+ * clause at DFARS 252.227-7013 and/or in similar or successor
+ * clauses in the FAR or the DOD or NASA FAR Supplement.
+ * Unpublished-- rights reserved under the copyright laws of the
+ * United States.  Contractor/manufacturer is Silicon Graphics,
+ * Inc., 2011 N.  Shoreline Blvd., Mountain View, CA 94039-7311.
+ *
+ * OpenGL(TM) is a trademark of Silicon Graphics, Inc.
+ */
+
+/* abgr.c - Demonstrates the use of the extension EXT_abgr.
+ 
+ The same image data is used for both ABGR and RGBA formats
+ in glDrawPixels and glTexImage2D.  The left side uses ABGR,
+ the right side RGBA.  The top polygon demonstrates use of texture,
+ and the bottom image is drawn with glDrawPixels.
+ 
+ Note that the textures are defined as 3 component, so the alpha
+ value is not used in applying the DECAL environment.  */
+
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <GLUT/glut.h>
 #include <iostream>
 #include <unistd.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <OpenGL/gl.h>
-#include <OpenGl/glu.h>
-#include <GLUT/glut.h>
-#include <iostream>
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
+using namespace std;
+using namespace cv;
 
-#include "RgbImage.h"
-#include "Lock.h"
+static int width = 1920;
+static int height = 1080;
 
-using namespace cv ;
-using namespace std ;
+GLenum doubleBuffer;
+GLubyte ubImage[65536];
 
-__LOCK_TYPE__ buffer_lock;
-static int win_width, win_height;
-bool on_animation = true;
-float animation_time = 0.0f;
-
-int _baseYLoc, _baseULoc, _baseVLoc;
-GLuint _baseYTexId, _baseUTexId, _baseVTexId;
-int _posLoc, _texCoordLoc, _baseTextureMatrixLoc;
-
-
-static float   camera_yaw = 0.0f;
-static float   camera_pitch = -20.0f;
-static float   camera_distance = 5.0f;
-
-char vShaderStr[] =
-"attribute vec4 a_position;                     \n"
-"attribute vec2 a_texCoord;                     \n"
-"uniform mat4 TextureMatrix;                    \n"
-"varying vec2 v_texCoord;                       \n"
-"void main()                                    \n"
-"{                                              \n"
-"   gl_Position = TextureMatrix * a_position;   \n"
-"   v_texCoord = a_texCoord;                    \n"
-"}                                              \n";
-
-char fShaderStr[] =
-"varying vec2 v_texCoord;                            \n"
-"uniform sampler2D s_YMap;                           \n"
-"uniform sampler2D s_UMap;                           \n"
-"uniform sampler2D s_VMap;                           \n"
-"void main()                                         \n"
-"{                                                   \n"
-"  float nx, ny, r, g, b, y, u, v;                   \n"
-"  nx = v_texCoord.x;                                \n"
-"  ny = v_texCoord.y;                                \n"
-"  y = texture2D(s_YMap, vec2(nx, ny)).r;            \n"
-"  u = texture2D(s_UMap, vec2(nx, ny)).r;            \n"
-"  v = texture2D(s_VMap, vec2(nx, ny)).r;            \n"
-"  if (0.0 < u)                                      \n"
-"  {                                                 \n"
-"     u = u - 0.5;                                   \n"
-"  }                                                 \n"
-"  if (0.0 < v)                                      \n"
-"  {                                                 \n"
-"     v = v - 0.5;                                   \n"
-"  }                                                 \n"
-"  r = y + 1.402 * v;                                \n"
-"  g = y - 0.344 * u - 0.714 * v;                    \n"
-"  b = y + 1.772 * u;                                \n"
-"  gl_FragColor = vec4(r, g, b, 1.0);                \n"
-"}                                                   \n";
-
-GLuint loadShader(GLenum type, const char *shaderSrc) {
-    GLuint shader;
-    GLint compiled;
+static void
+Init(void)
+{
+    int j;
+    GLubyte *img;
+    GLsizei imgWidth = 128;
     
-    // Create the shader object
-    shader = glCreateShader(type);
-    
-    if (shader == 0)
-        return 0;
-    
-    // Load the shader source
-    glShaderSource(shader, 1, &shaderSrc, NULL);
-    
-    // Compile the shader
-    glCompileShader(shader);
-    
-    // Check the compile status
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-    
-    if (!compiled) {
-        GLint infoLen = 0;
-        
-        glGetShaderiv ( shader, GL_INFO_LOG_LENGTH, &infoLen);
-        
-        if (infoLen > 1) {
-            char* infoLog = (char*) malloc(sizeof(char) * infoLen);
-            glGetShaderInfoLog(shader, infoLen, NULL, infoLog);
-            printf("Error compiling shader:\n%s\n", infoLog);
-            free(infoLog);
-        }
-        
-        glDeleteShader(shader);
-        return 0;
-    }
-    return shader;
-}
-
-GLuint loadProgram(const char *vertShaderSrc, const char *fragShaderSrc) {
-    GLuint vertexShader;
-    GLuint fragmentShader;
-    GLuint programObject;
-    GLint linked;
-    
-    // Load the vertex/fragment shaders
-    vertexShader = loadShader(GL_VERTEX_SHADER, vertShaderSrc);
-    if (vertexShader == 0)
-        return 0;
-    
-    fragmentShader = loadShader(GL_FRAGMENT_SHADER, fragShaderSrc);
-    if (fragmentShader == 0) {
-        glDeleteShader(vertexShader);
-        return 0;
-    }
-    
-    // Create the program object
-    programObject = glCreateProgram();
-    
-    if (programObject == 0)
-        return 0;
-    
-    glAttachShader(programObject, vertexShader);
-    glAttachShader(programObject, fragmentShader);
-    
-    // Link the program
-    glLinkProgram(programObject);
-    
-    // Check the link status
-    glGetProgramiv(programObject, GL_LINK_STATUS, &linked);
-    
-    if (!linked) {
-        GLint infoLen = 0;
-        
-        glGetProgramiv(programObject, GL_INFO_LOG_LENGTH, &infoLen);
-        
-        if (infoLen > 1) {
-            char* infoLog = (char*) malloc(sizeof(char) * infoLen);
-            glGetShaderInfoLog(programObject, infoLen, NULL, infoLog);
-            printf("Error compiling shader:\n%s\n", infoLog);
-            free(infoLog);
-        }
-        glDeleteProgram(programObject);
-        return 0;
-    }
-    
-    // Free up no longer needed shader resources
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-    
-    return programObject;
-}
-
-GLuint loadTexture() {
-    GLuint texture;
-    
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 0, 0, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    
-    return texture;
-}
-
-
-void  reshape( int w, int h ) {
-    glViewport(0, 0, w, h);
-    
-    glMatrixMode( GL_PROJECTION );
+    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective( 45, (double)w/h, 1, 500 );
+    gluPerspective(60.0, 1.0, 0.1, 1000.0);
+    glMatrixMode(GL_MODELVIEW);
+    glDisable(GL_DITHER);
+    return;
     
-    win_width = w;
-    win_height = h;
+    /* Create image */
+    img = ubImage;
+    for (j = 0; j < 32 * imgWidth; j++) {
+        *img++ = 0xff;
+        *img++ = 0x00;
+        *img++ = 0x00;
+        *img++ = 0xff;
+    }
+    for (j = 0; j < 32 * imgWidth; j++) {
+        *img++ = 0xff;
+        *img++ = 0x00;
+        *img++ = 0xff;
+        *img++ = 0x00;
+    }
+    for (j = 0; j < 32 * imgWidth; j++) {
+        *img++ = 0xff;
+        *img++ = 0xff;
+        *img++ = 0x00;
+        *img++ = 0x00;
+    }
+    for (j = 0; j < 32 * imgWidth; j++) {
+        *img++ = 0x00;
+        *img++ = 0xff;
+        *img++ = 0x00;
+        *img++ = 0xff;
+    }
 }
 
+/* ARGSUSED1 */
+static void
+Key(unsigned char key, int x, int y)
+{
+    switch (key) {
+        case 27:
+            exit(0);
+    }
+}
 
-void testUpdateTexture() {
-    std::string filename = "/Users/lockercho/workspace/GPU/final_project/walk_short.mp4";
-    
-    VideoCapture capture;
-    cv::Mat RGB, YUV;
-    
-    if(!capture.open(filename))
-    {
-        cout<<"Video Not Found"<<endl;
-        return ;
+std::string filename = "/Users/lockercho/workspace/GPU/final_project/walk_short.mp4";
+VideoCapture capture;
+bool opened_capture = false;
+
+cv::Mat RGB, YUV;
+
+void
+TexFunc(void)
+{
+    if(!opened_capture) {
+        if(!capture.open(filename))
+        {
+            cout<<"Video Not Found"<<endl;
+            return ;
+        }
+        opened_capture = true;
     }
     
     capture >> RGB;  //Read a frame from the video
-        
+    
     // Check if the frame has been read correctly or not
     if(RGB.empty()) {
         cout<<"Capture Finished"<<endl;
-//        break;
+        //        break;
     }
-        
-    cv::cvtColor(RGB, YUV, CV_BGR2YCrCb);
     
-    Mat chan[3];
-    split(YUV,chan);
+//    cv::cvtColor(RGB, YUV, CV_BGR2YCrCb);
     
-    Mat y  = chan[0];
-    Mat u = chan[1];
-    Mat v = chan[2];
+//    Mat chan[3];
+//    split(YUV,chan);
+//    
+//    Mat y  = chan[0];
+//    Mat u = chan[1];
+//    Mat v = chan[2];
     
-    namedWindow("Y", CV_WINDOW_AUTOSIZE );
-    imshow("Y",y);
+//        namedWindow("Y", CV_WINDOW_AUTOSIZE );
+//        imshow("Y",RGB);
+    //
+    //    namedWindow("U", CV_WINDOW_AUTOSIZE );
+    //    imshow("U",u);
+    //
+    //    namedWindow("V", CV_WINDOW_AUTOSIZE );
+    //    imshow("V",v);
     
-    namedWindow("U", CV_WINDOW_AUTOSIZE );
-    imshow("U",u);
+    glEnable(GL_TEXTURE_2D);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
     
-    namedWindow("V", CV_WINDOW_AUTOSIZE );
-    imshow("V",v);
+//    glTexImage2D(GL_TEXTURE_2D, 0, 3, 128, 128, 0, GL_RGBA,
+//                 GL_UNSIGNED_BYTE, ubImage);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, (uint8_t*) RGB.data);
     
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _baseYTexId);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, RGB.cols, RGB.rows, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE,
-                 (uint8_t*)y.data);
-    //        glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, strideY, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, textureY);
-    glUniform1i(_baseYLoc, 0);
     
-    // Bind the U map
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _baseUTexId);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, RGB.cols, RGB.rows / 2, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, (uint8_t*)u.data);
-    glUniform1i(_baseULoc, 1);
+//    glBegin(GL_POLYGON);
+//    glTexCoord2f(1.0, 1.0);
+//    glVertex3f(0.8, 0.8, -2.0);
+//    glTexCoord2f(0.0, 1.0);
+//    glVertex3f(0.2, 0.8, -100.0);
+//    glTexCoord2f(0.0, 0.0);
+//    glVertex3f(0.2, 0.2, -100.0);
+//    glTexCoord2f(1.0, 0.0);
+//    glVertex3f(0.8, 0.2, -2.0);
+//    glEnd();
     
-    // Bind the V map
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, _baseVTexId);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, RGB.cols, RGB.rows / 2, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, (uint8_t*)v.data);
-    glUniform1i(_baseVLoc, 2);
+    glBegin(GL_POLYGON);
+    glTexCoord2f(1.0, 1.0);
+    glVertex3f(1, 1, -2.0);
+    glTexCoord2f(0.0, 1.0);
+    glVertex3f(-1, 1, -2.0);
+    glTexCoord2f(0.0, 0.0);
+    glVertex3f(-1, -1, -2.0);
+    glTexCoord2f(1.0, 0.0);
+    glVertex3f(1, -1, -2.0);
+    glEnd();
     
-    capture.release();
-}
-
-void  display() {
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
-    
-    glMatrixMode( GL_MODELVIEW );
-    glLoadIdentity();
-    glTranslatef( 0.0, 0.0, - camera_distance );
-
-//    char  message[ 64 ];
-//    sprintf( message, "Press 'L' key to Load a BVH file" );
-//    drawMessage( 0, message );
-//    fprintf(stderr, "qwe");
-    
-    glFlush();
     glDisable(GL_TEXTURE_2D);
-    glutSwapBuffers();
 }
 
+static void
+Draw(void)
+{
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    TexFunc();
+    
+    if (doubleBuffer) {
+        glutSwapBuffers();
+    } else {
+        glFlush();
+    }
+}
 
-int main(int argc, char ** argv) {
+static void
+Args(int argc, char **argv)
+{
+    GLint i;
     
-    __INIT_LOCK__(&buffer_lock);
+    doubleBuffer = GL_TRUE;
+    
+    for (i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-sb") == 0) {
+            doubleBuffer = GL_FALSE;
+        } else if (strcmp(argv[i], "-db") == 0) {
+            doubleBuffer = GL_TRUE;
+        }
+    }
+}
 
-    glutInit( &argc, argv );
-    glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGBA | GLUT_STENCIL );
-    glutInitWindowSize( 640, 640 );
-    glutInitWindowPosition( 0, 0 );
-    glutCreateWindow("Player");
-
-    GLuint shader = glCreateShader(GL_VERTEX_SHADER);
-
-    GLuint program = loadProgram(vShaderStr, fShaderStr);
+int
+main(int argc, char **argv) {
+    GLenum type;
     
-    _baseYLoc = glGetUniformLocation(program, "s_YMap");
-    _baseULoc = glGetUniformLocation(program, "s_UMap");
-    _baseVLoc = glGetUniformLocation(program, "s_VMap");
-//
-    // Load the textures
-    _baseYTexId = loadTexture();
-    _baseUTexId = loadTexture();
-    _baseVTexId = loadTexture();
+    glutInit(&argc, argv);
+    Args(argc, argv);
     
-    // Get the attribute locations
-    _posLoc = glGetAttribLocation(program, "a_position");
-    _texCoordLoc = glGetAttribLocation(program, "a_texCoord");
-    _baseTextureMatrixLoc = glGetUniformLocation(program, "TextureMatrix");
-    
-    testUpdateTexture();
-    
-    // Use the program object
-    glUseProgram(program);
-    
-    glutDisplayFunc(display);
-    glutReshapeFunc(reshape);
-    
+    type = GLUT_RGB;
+    type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
+    glutInitDisplayMode(type);
+    glutInitWindowSize(width/2, height/2);
+    glutCreateWindow("ABGR extension");
+    if (!glutExtensionSupported("GL_EXT_abgr")) {
+        printf("Couldn't find abgr extension.\n");
+        exit(0);
+    }
+#if !GL_EXT_abgr
+    printf("WARNING: client-side OpenGL has no ABGR extension support!\n");
+    printf("         Drawing only RGBA (and not ABGR) images and textures.\n");
+#endif
+    Init();
+    glutKeyboardFunc(Key);
+    glutDisplayFunc(Draw);
     glutMainLoop();
-
-    return 0;
+    return 0;             /* ANSI C requires main to return int. */
 }

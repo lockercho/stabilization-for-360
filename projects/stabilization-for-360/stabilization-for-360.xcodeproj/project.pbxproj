@@ -60,12 +60,12 @@
 		136000321ED9DF8800DA1598 /* libopencv_videostab.2.4.13.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1360FFFC1ED9DF8800DA1598 /* libopencv_videostab.2.4.13.dylib */; };
 		136000331ED9DF8800DA1598 /* libopencv_videostab.2.4.13.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1360FFFD1ED9DF8800DA1598 /* libopencv_videostab.2.4.13.dylib */; };
 		136000341ED9DF8800DA1598 /* libopencv_videostab.2.4.13.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1360FFFE1ED9DF8800DA1598 /* libopencv_videostab.2.4.13.dylib */; };
-		136000381ED9E61200DA1598 /* Renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 136000361ED9E61200DA1598 /* Renderer.cpp */; };
 		1360003F1ED9F1C600DA1598 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1360003D1ED9F1C600DA1598 /* GLUT.framework */; };
 		136000401ED9F1C600DA1598 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1360003E1ED9F1C600DA1598 /* OpenGL.framework */; };
 		136000421ED9F1D000DA1598 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 136000411ED9F1D000DA1598 /* CoreFoundation.framework */; };
-		136000451EDA0A5400DA1598 /* RgbImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 136000431EDA0A5400DA1598 /* RgbImage.cpp */; };
-		1360FFC81ED9DED300DA1598 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1360FFC71ED9DED300DA1598 /* main.cpp */; };
+		136000511EDAAD3E00DA1598 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1360004C1EDAAD3E00DA1598 /* main.cpp */; };
+		136000521EDAAD3E00DA1598 /* Renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1360004D1EDAAD3E00DA1598 /* Renderer.cpp */; };
+		136000531EDAAD3E00DA1598 /* RgbImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1360004F1EDAAD3E00DA1598 /* RgbImage.cpp */; };
 		1360FFFF1ED9DF8800DA1598 /* libopencv_calib3d.2.4.13.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1360FFC91ED9DF8800DA1598 /* libopencv_calib3d.2.4.13.dylib */; };
 /* End PBXBuildFile section */
 
@@ -82,16 +82,16 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		136000361ED9E61200DA1598 /* Renderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Renderer.cpp; sourceTree = "<group>"; };
-		136000371ED9E61200DA1598 /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
-		1360003A1ED9EE9D00DA1598 /* Lock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Lock.h; sourceTree = "<group>"; };
 		1360003D1ED9F1C600DA1598 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
 		1360003E1ED9F1C600DA1598 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		136000411ED9F1D000DA1598 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
-		136000431EDA0A5400DA1598 /* RgbImage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RgbImage.cpp; sourceTree = "<group>"; };
-		136000441EDA0A5400DA1598 /* RgbImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RgbImage.h; sourceTree = "<group>"; };
+		1360004B1EDAAD3E00DA1598 /* Lock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Lock.h; path = ../../src/Lock.h; sourceTree = "<group>"; };
+		1360004C1EDAAD3E00DA1598 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../src/main.cpp; sourceTree = "<group>"; };
+		1360004D1EDAAD3E00DA1598 /* Renderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Renderer.cpp; path = ../../src/Renderer.cpp; sourceTree = "<group>"; };
+		1360004E1EDAAD3E00DA1598 /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Renderer.h; path = ../../src/Renderer.h; sourceTree = "<group>"; };
+		1360004F1EDAAD3E00DA1598 /* RgbImage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RgbImage.cpp; path = ../../src/RgbImage.cpp; sourceTree = "<group>"; };
+		136000501EDAAD3E00DA1598 /* RgbImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RgbImage.h; path = ../../src/RgbImage.h; sourceTree = "<group>"; };
 		1360FFBD1ED9DE9D00DA1598 /* stabilization-for-360 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "stabilization-for-360"; sourceTree = BUILT_PRODUCTS_DIR; };
-		1360FFC71ED9DED300DA1598 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../../src/main.cpp; sourceTree = "<group>"; };
 		1360FFC91ED9DF8800DA1598 /* libopencv_calib3d.2.4.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_calib3d.2.4.13.dylib; path = "/usr/local/Cellar/opencv/HEAD-01e34b6/lib/libopencv_calib3d.2.4.13.dylib"; sourceTree = "<absolute>"; };
 		1360FFCA1ED9DF8800DA1598 /* libopencv_calib3d.2.4.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_calib3d.2.4.13.dylib; path = "/usr/local/Cellar/opencv/HEAD-01e34b6/lib/libopencv_calib3d.2.4.13.dylib"; sourceTree = "<absolute>"; };
 		1360FFCB1ED9DF8800DA1598 /* libopencv_calib3d.2.4.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_calib3d.2.4.13.dylib; path = "/usr/local/Cellar/opencv/HEAD-01e34b6/lib/libopencv_calib3d.2.4.13.dylib"; sourceTree = "<absolute>"; };
@@ -290,7 +290,12 @@
 		1360FFB41ED9DE9D00DA1598 = {
 			isa = PBXGroup;
 			children = (
-				1360FFBF1ED9DE9D00DA1598 /* stabilization-for-360 */,
+				1360004B1EDAAD3E00DA1598 /* Lock.h */,
+				1360004C1EDAAD3E00DA1598 /* main.cpp */,
+				1360004D1EDAAD3E00DA1598 /* Renderer.cpp */,
+				1360004E1EDAAD3E00DA1598 /* Renderer.h */,
+				1360004F1EDAAD3E00DA1598 /* RgbImage.cpp */,
+				136000501EDAAD3E00DA1598 /* RgbImage.h */,
 				1360FFBE1ED9DE9D00DA1598 /* Products */,
 				136000351ED9DFA500DA1598 /* libs */,
 				1360003C1ED9F1C600DA1598 /* Frameworks */,
@@ -303,19 +308,6 @@
 				1360FFBD1ED9DE9D00DA1598 /* stabilization-for-360 */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		1360FFBF1ED9DE9D00DA1598 /* stabilization-for-360 */ = {
-			isa = PBXGroup;
-			children = (
-				1360FFC71ED9DED300DA1598 /* main.cpp */,
-				1360003A1ED9EE9D00DA1598 /* Lock.h */,
-				136000361ED9E61200DA1598 /* Renderer.cpp */,
-				136000371ED9E61200DA1598 /* Renderer.h */,
-				136000431EDA0A5400DA1598 /* RgbImage.cpp */,
-				136000441EDA0A5400DA1598 /* RgbImage.h */,
-			);
-			path = "stabilization-for-360";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -375,9 +367,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				136000381ED9E61200DA1598 /* Renderer.cpp in Sources */,
-				1360FFC81ED9DED300DA1598 /* main.cpp in Sources */,
-				136000451EDA0A5400DA1598 /* RgbImage.cpp in Sources */,
+				136000521EDAAD3E00DA1598 /* Renderer.cpp in Sources */,
+				136000511EDAAD3E00DA1598 /* main.cpp in Sources */,
+				136000531EDAAD3E00DA1598 /* RgbImage.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
