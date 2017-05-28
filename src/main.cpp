@@ -171,6 +171,8 @@ TexFunc(void)
     
 //    glTexImage2D(GL_TEXTURE_2D, 0, 3, 128, 128, 0, GL_RGBA,
 //                 GL_UNSIGNED_BYTE, ubImage);
+    cvtColor(RGB, RGB, CV_BGR2RGB);
+    
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
                  GL_UNSIGNED_BYTE, (uint8_t*) RGB.data);
     
