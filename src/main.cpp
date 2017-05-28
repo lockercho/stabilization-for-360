@@ -231,6 +231,12 @@ Args(int argc, char **argv)
     }
 }
 
+void timer( int value )
+{
+    glutPostRedisplay();
+    glutTimerFunc( 16, timer, 0 );
+}
+
 int
 main(int argc, char **argv) {
     GLenum type;
@@ -253,6 +259,7 @@ main(int argc, char **argv) {
 #endif
     Init();
     glutKeyboardFunc(Key);
+    glutTimerFunc( 0, timer, 0 );
     glutDisplayFunc(Draw);
     glutMainLoop();
     return 0;             /* ANSI C requires main to return int. */
