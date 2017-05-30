@@ -48,6 +48,7 @@
  Note that the textures are defined as 3 component, so the alpha
  value is not used in applying the DECAL environment.  */
 
+#ifndef _WIN32
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -57,6 +58,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#endif
 
 using namespace std;
 using namespace cv;
@@ -119,7 +121,7 @@ Key(unsigned char key, int x, int y)
     }
 }
 
-std::string filename = "/Users/lockercho/workspace/GPU/final_project/walk_short.mp4";
+std::string filename = "walk_short.mp4";
 VideoCapture capture;
 bool opened_capture = false;
 
