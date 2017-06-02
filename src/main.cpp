@@ -189,13 +189,14 @@ TexFunc(void)
 //    glEnd();
     
     glBegin(GL_POLYGON);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f(1, 1, -2.0);
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f(-1, 1, -2.0);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(-1, -1, -2.0);
+    
     glTexCoord2f(1.0, 0.0);
+    glVertex3f(1, 1, -2.0);
+    glTexCoord2f(0.0, 0.0);
+    glVertex3f(-1, 1, -2.0);
+    glTexCoord2f(0.0, 1.0);
+    glVertex3f(-1, -1, -2.0);
+    glTexCoord2f(1.0, 1.0);
     glVertex3f(1, -1, -2.0);
     glEnd();
     
