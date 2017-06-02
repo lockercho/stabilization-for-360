@@ -20,11 +20,13 @@
 
 #include "RgbImage.h"
 
+#ifndef _WIN32
 //#ifndef RGBIMAGE_DONT_USE_OPENGL
 //#include <windows.h>
 #include <OpenGL/gl.h>
 //#endif
 #include <stdio.h>
+#endif
 
 RgbImage::RgbImage(int numRows, int numCols)
 {
