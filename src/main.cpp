@@ -53,6 +53,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <GLUT/glut.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/gl3.h>
 #include <iostream>
 #include <unistd.h>
 #include <opencv2/core/core.hpp>
@@ -69,46 +71,148 @@ static int height = 1080;
 GLenum doubleBuffer;
 GLubyte ubImage[65536];
 
+
+char vs_str[] =
+"vec3 vertex_position;\n"
+"vec2 vt;\n"
+"uniform mat4 view, proj;\n"
+"vec2 texture_coordinates;\n"
+"void main() {\n"
+"    texture_coordinates = vt;\n"
+"    gl_Position = proj * view * vec4 (vertex_position, 1.0);\n"
+"}\n";
+
+char fs_str[] =
+"vec3 colour;\n"
+"vec4 frag_colour;\n"
+"void main() {\n"
+"    frag_colour = vec4(colour, 1.0);\n"
+"}\n";
+
+GLuint shader_program;
+GLuint vao;
+
+bool is_programme_valid( GLuint sp ) {
+    glValidateProgram( sp );
+    GLint params = -1;
+    glGetProgramiv( sp, GL_VALIDATE_STATUS, &params );
+    if ( GL_TRUE != params ) {
+        fprintf(stderr, "program %i GL_VALIDATE_STATUS = GL_FALSE\n", sp );
+//        print_programme_info_log( sp );
+        return false;
+    }
+    fprintf(stderr, "program %i GL_VALIDATE_STATUS = GL_TRUE\n", sp );
+    return true;
+}
+
+
+GLuint createProgram(char * vShaderStr, char * fShaderStr) {
+    GLuint vertShader, fragShader, program;
+    
+    // init vertex shader
+    vertShader = glCreateShader(GL_VERTEX_SHADER);
+    const GLchar *p = (const GLchar *) vShaderStr;
+    glShaderSource( vertShader, 1, &p, NULL );
+    glCompileShader(vertShader);
+    // check for compile errors
+    int params = -1;
+    glGetShaderiv(vertShader, GL_COMPILE_STATUS, &params );
+    if ( GL_TRUE != params ) {
+        fprintf(stderr, "ERROR: GL shader index %i did not compile\n", vertShader);
+//        print_shader_info_log( vertShader);
+        int max_length = 2048;
+        int actual_length = 0;
+        char log[2048];
+        glGetShaderInfoLog(vertShader, max_length, &actual_length, log );
+        fprintf(stderr, "GL index %i:\n%s\n", vertShader, log );
+        return false; // or exit or something
+    }
+    fprintf(stderr, "shader compiled. index %i\n", vertShader);
+    
+    // init vertex shader
+    fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+    p = (const GLchar *) fShaderStr;
+    glShaderSource(fragShader, 1, &p, NULL );
+    glCompileShader(fragShader);
+    // check for compile errors
+    params = -1;
+    glGetShaderiv(fragShader, GL_COMPILE_STATUS, &params );
+    if ( GL_TRUE != params ) {
+        fprintf(stderr, "ERROR: GL shader index %i did not compile\n", fragShader);
+        int max_length = 2048;
+        int actual_length = 0;
+        char log[2048];
+        glGetShaderInfoLog(fragShader, max_length, &actual_length, log );
+        fprintf(stderr, "GL index %i:\n%s\n", fragShader, log );
+        //        print_shader_info_log( vertShader);
+        return false; // or exit or something
+    }
+    fprintf(stderr, "shader compiled. index %i\n", fragShader);
+    
+    program = glCreateProgram();
+    fprintf(stderr, "created programme %u. attaching shaders %u and %u...\n", program, vertShader, fragShader);
+    glAttachShader(program, vertShader);
+    glAttachShader(program, fragShader);
+    // link the shader programme. if binding input attributes do that before link
+    glLinkProgram(program);
+    params = -1;
+    glGetProgramiv(program, GL_LINK_STATUS, &params );
+    if ( GL_TRUE != params ) {
+        fprintf(stderr, "ERROR: could not link shader programme GL index %u\n",
+                   program);
+//        print_programme_info_log(program);
+        return false;
+    }
+    is_programme_valid(program);
+    // delete shaders here to free memory
+    glDeleteShader( vertShader );
+    glDeleteShader( fragShader );
+    
+    return program;
+}
+
 static void
 Init(void)
 {
-    int j;
-    GLubyte *img;
-    GLsizei imgWidth = 128;
-    
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(60.0, 1.0, 0.1, 1000.0);
     glMatrixMode(GL_MODELVIEW);
     glDisable(GL_DITHER);
-    return;
     
-    /* Create image */
-    img = ubImage;
-    for (j = 0; j < 32 * imgWidth; j++) {
-        *img++ = 0xff;
-        *img++ = 0x00;
-        *img++ = 0x00;
-        *img++ = 0xff;
-    }
-    for (j = 0; j < 32 * imgWidth; j++) {
-        *img++ = 0xff;
-        *img++ = 0x00;
-        *img++ = 0xff;
-        *img++ = 0x00;
-    }
-    for (j = 0; j < 32 * imgWidth; j++) {
-        *img++ = 0xff;
-        *img++ = 0xff;
-        *img++ = 0x00;
-        *img++ = 0x00;
-    }
-    for (j = 0; j < 32 * imgWidth; j++) {
-        *img++ = 0x00;
-        *img++ = 0xff;
-        *img++ = 0x00;
-        *img++ = 0xff;
-    }
+    
+    /* OTHER STUFF GOES HERE NEXT */
+    GLfloat points[] = { -0.5f, -0.5f, -2.0f, 0.5f,	-0.5f, -2.0f, 0.5f,	0.5f, -2.0f,
+        0.5f,	0.5f,-2.0f, -0.5f, 0.5f,	-2.0f, -0.5f, -0.5f, -2.0f};
+    
+    // 2^16 = 65536
+    GLfloat texcoords[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f };
+    
+    GLuint points_vbo;
+    glGenBuffers( 1, &points_vbo );
+    glBindBuffer( GL_ARRAY_BUFFER, points_vbo );
+    glBufferData( GL_ARRAY_BUFFER, 18 * sizeof( GLfloat ), points, GL_STATIC_DRAW );
+    
+    GLuint texcoords_vbo;
+    glGenBuffers( 1, &texcoords_vbo );
+    glBindBuffer( GL_ARRAY_BUFFER, texcoords_vbo );
+    glBufferData( GL_ARRAY_BUFFER, 12 * sizeof( GLfloat ), texcoords,
+                 GL_STATIC_DRAW );
+    
+//    GLuint vao;
+    glGenVertexArrays( 1, &vao );
+    glBindVertexArray( vao );
+    glBindBuffer( GL_ARRAY_BUFFER, points_vbo );
+    glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, NULL );
+    glBindBuffer( GL_ARRAY_BUFFER, texcoords_vbo );
+    glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, NULL ); // normalise!
+    glEnableVertexAttribArray( 0 );
+    glEnableVertexAttribArray( 1 );
+    
+    shader_program = createProgram(vs_str, fs_str);
+    
+    return;
 }
 
 /* ARGSUSED1 */
@@ -211,7 +315,12 @@ Draw(void)
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
     
-    TexFunc();
+    glUseProgram( shader_program);
+    glBindVertexArray( vao );
+    // draw points 0-3 from the currently bound VAO with current in-use shader
+    glDrawArrays( GL_TRIANGLES, 0, 6 );
+    
+//    TexFunc();
     
     if (doubleBuffer) {
         glutSwapBuffers();

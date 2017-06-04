@@ -65,7 +65,6 @@
 		136000421ED9F1D000DA1598 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 136000411ED9F1D000DA1598 /* CoreFoundation.framework */; };
 		136000511EDAAD3E00DA1598 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1360004C1EDAAD3E00DA1598 /* main.cpp */; };
 		136000521EDAAD3E00DA1598 /* Renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1360004D1EDAAD3E00DA1598 /* Renderer.cpp */; };
-		136000531EDAAD3E00DA1598 /* RgbImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1360004F1EDAAD3E00DA1598 /* RgbImage.cpp */; };
 		1360FFFF1ED9DF8800DA1598 /* libopencv_calib3d.2.4.13.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1360FFC91ED9DF8800DA1598 /* libopencv_calib3d.2.4.13.dylib */; };
 /* End PBXBuildFile section */
 
@@ -89,8 +88,6 @@
 		1360004C1EDAAD3E00DA1598 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../src/main.cpp; sourceTree = "<group>"; };
 		1360004D1EDAAD3E00DA1598 /* Renderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Renderer.cpp; path = ../../src/Renderer.cpp; sourceTree = "<group>"; };
 		1360004E1EDAAD3E00DA1598 /* Renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Renderer.h; path = ../../src/Renderer.h; sourceTree = "<group>"; };
-		1360004F1EDAAD3E00DA1598 /* RgbImage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RgbImage.cpp; path = ../../src/RgbImage.cpp; sourceTree = "<group>"; };
-		136000501EDAAD3E00DA1598 /* RgbImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RgbImage.h; path = ../../src/RgbImage.h; sourceTree = "<group>"; };
 		1360FFBD1ED9DE9D00DA1598 /* stabilization-for-360 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "stabilization-for-360"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1360FFC91ED9DF8800DA1598 /* libopencv_calib3d.2.4.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_calib3d.2.4.13.dylib; path = "/usr/local/Cellar/opencv/HEAD-01e34b6/lib/libopencv_calib3d.2.4.13.dylib"; sourceTree = "<absolute>"; };
 		1360FFCA1ED9DF8800DA1598 /* libopencv_calib3d.2.4.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_calib3d.2.4.13.dylib; path = "/usr/local/Cellar/opencv/HEAD-01e34b6/lib/libopencv_calib3d.2.4.13.dylib"; sourceTree = "<absolute>"; };
@@ -294,8 +291,6 @@
 				1360004C1EDAAD3E00DA1598 /* main.cpp */,
 				1360004D1EDAAD3E00DA1598 /* Renderer.cpp */,
 				1360004E1EDAAD3E00DA1598 /* Renderer.h */,
-				1360004F1EDAAD3E00DA1598 /* RgbImage.cpp */,
-				136000501EDAAD3E00DA1598 /* RgbImage.h */,
 				1360FFBE1ED9DE9D00DA1598 /* Products */,
 				136000351ED9DFA500DA1598 /* libs */,
 				1360003C1ED9F1C600DA1598 /* Frameworks */,
@@ -369,7 +364,6 @@
 			files = (
 				136000521EDAAD3E00DA1598 /* Renderer.cpp in Sources */,
 				136000511EDAAD3E00DA1598 /* main.cpp in Sources */,
-				136000531EDAAD3E00DA1598 /* RgbImage.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -473,6 +467,7 @@
 					"/usr/local/Cellar/opencv/HEAD-01e34b6/lib/",
 					"/usr/local/Cellar/opencv/HEAD-01e34b6/lib",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -485,6 +480,7 @@
 					"/usr/local/Cellar/opencv/HEAD-01e34b6/lib/",
 					"/usr/local/Cellar/opencv/HEAD-01e34b6/lib",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
