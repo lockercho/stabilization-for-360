@@ -1,7 +1,10 @@
 #ifndef EQUIRECT2CUBIC_H
 #define EQUIRECT2CUBIC_H
+
+#ifndef _WIN32
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
+#endif
 
 /**
  * @brief The Equirect2Cubic class

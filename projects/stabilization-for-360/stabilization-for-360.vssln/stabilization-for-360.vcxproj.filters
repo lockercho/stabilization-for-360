@@ -18,21 +18,27 @@
     <ClCompile Include="..\..\..\src\main.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\RgbImage.cpp">
+    <ClCompile Include="..\..\..\src\stdafx.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\stdafx.cpp">
+    <ClCompile Include="..\..\..\src\Equirect2Cubic.cpp">
+      <Filter>原始程式檔</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\Tracker.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\src\RgbImage.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\src\stdafx.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\src\targetver.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\Equirect2Cubic.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\Tracker.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

@@ -12,16 +12,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\main.cpp" />
-    <ClCompile Include="..\..\..\src\RgbImage.cpp" />
     <ClCompile Include="..\..\..\src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\Equirect2Cubic.cpp" />
+    <ClCompile Include="..\..\..\src\Tracker.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\src\RgbImage.h" />
     <ClInclude Include="..\..\..\src\stdafx.h" />
     <ClInclude Include="..\..\..\src\targetver.h" />
+    <ClInclude Include="..\..\..\src\Equirect2Cubic.h" />
+    <ClInclude Include="..\..\..\src\Tracker.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F592DF0A-C16E-4FD7-95B1-E40F2865A47B}</ProjectGuid>

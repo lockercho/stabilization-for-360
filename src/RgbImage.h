@@ -21,10 +21,8 @@
 #ifndef RGBIMAGE_H
 #define RGBIMAGE_H
 
-#ifndef _WIN32
 #include <stdio.h>
 #include <assert.h>
-#endif
 
 // Include the next line to turn off the routines that use OpenGL
 // #define RGBIMAGE_DONT_USE_OPENGL
