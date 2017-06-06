@@ -60,6 +60,9 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #endif
 
+#include "Equirect2Cubic.h"
+#include "Tracker.h"
+
 using namespace std;
 using namespace cv;
 
@@ -126,6 +129,7 @@ VideoCapture capture;
 bool opened_capture = false;
 
 cv::Mat RGB, YUV;
+Tracker tracker;
 
 void
 TexFunc(void)
@@ -147,6 +151,20 @@ TexFunc(void)
         //        break;
     }
     
+	auto cube_face_size = 256;
+
+	Equirect2Cubic myTransForm(RGB.cols, RGB.rows, cube_face_size, cube_face_size);
+
+	Mat result[6];
+
+	for (int i = 0; i<6; i++)
+	{
+		result[i] = Mat(cube_face_size, cube_face_size, RGB.type());
+		myTransForm.remapWithMap(RGB, result[i], i);
+	}
+
+	tracker.Track(result);
+
 //    cv::cvtColor(RGB, YUV, CV_BGR2YCrCb);
     
 //    Mat chan[3];
