@@ -66,6 +66,7 @@
 		136000511EDAAD3E00DA1598 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1360004C1EDAAD3E00DA1598 /* main.cpp */; };
 		136000521EDAAD3E00DA1598 /* Renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1360004D1EDAAD3E00DA1598 /* Renderer.cpp */; };
 		1360FFFF1ED9DF8800DA1598 /* libopencv_calib3d.2.4.13.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1360FFC91ED9DF8800DA1598 /* libopencv_calib3d.2.4.13.dylib */; };
+		13C327C31EE56A5A00F9B107 /* res_texture.c in Sources */ = {isa = PBXBuildFile; fileRef = 13C327C21EE56A5A00F9B107 /* res_texture.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -143,6 +144,8 @@
 		1360FFFC1ED9DF8800DA1598 /* libopencv_videostab.2.4.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_videostab.2.4.13.dylib; path = "/usr/local/Cellar/opencv/HEAD-01e34b6/lib/libopencv_videostab.2.4.13.dylib"; sourceTree = "<absolute>"; };
 		1360FFFD1ED9DF8800DA1598 /* libopencv_videostab.2.4.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_videostab.2.4.13.dylib; path = "/usr/local/Cellar/opencv/HEAD-01e34b6/lib/libopencv_videostab.2.4.13.dylib"; sourceTree = "<absolute>"; };
 		1360FFFE1ED9DF8800DA1598 /* libopencv_videostab.2.4.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_videostab.2.4.13.dylib; path = "/usr/local/Cellar/opencv/HEAD-01e34b6/lib/libopencv_videostab.2.4.13.dylib"; sourceTree = "<absolute>"; };
+		13C327C11EE5697000F9B107 /* sphere_vertice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sphere_vertice.h; path = ../../src/sphere_vertice.h; sourceTree = "<group>"; };
+		13C327C21EE56A5A00F9B107 /* res_texture.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = res_texture.c; path = ../../src/res_texture.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -287,6 +290,8 @@
 		1360FFB41ED9DE9D00DA1598 = {
 			isa = PBXGroup;
 			children = (
+				13C327C21EE56A5A00F9B107 /* res_texture.c */,
+				13C327C11EE5697000F9B107 /* sphere_vertice.h */,
 				1360004B1EDAAD3E00DA1598 /* Lock.h */,
 				1360004C1EDAAD3E00DA1598 /* main.cpp */,
 				1360004D1EDAAD3E00DA1598 /* Renderer.cpp */,
@@ -363,6 +368,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				136000521EDAAD3E00DA1598 /* Renderer.cpp in Sources */,
+				13C327C31EE56A5A00F9B107 /* res_texture.c in Sources */,
 				136000511EDAAD3E00DA1598 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

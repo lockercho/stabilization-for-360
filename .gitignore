@@ -243,4 +243,4 @@ ModelManifest.xml
 projects/stabilization-for-360/DerivedData/
 projects/stabilization-for-360/stabilization-for-360.xcodeproj/project.xcworkspace/xcuserdata/
 projects/stabilization-for-360/stabilization-for-360.xcodeproj/xcuserdata/
-
+src/*.py
