@@ -67,6 +67,8 @@
 		136000521EDAAD3E00DA1598 /* Renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1360004D1EDAAD3E00DA1598 /* Renderer.cpp */; };
 		136000531EDAAD3E00DA1598 /* RgbImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1360004F1EDAAD3E00DA1598 /* RgbImage.cpp */; };
 		1360FFFF1ED9DF8800DA1598 /* libopencv_calib3d.2.4.13.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1360FFC91ED9DF8800DA1598 /* libopencv_calib3d.2.4.13.dylib */; };
+		13C327C71EE6589000F9B107 /* Equirect2Cubic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13C327C41EE6589000F9B107 /* Equirect2Cubic.cpp */; };
+		13C327C81EE6589000F9B107 /* Tracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13C327C61EE6589000F9B107 /* Tracker.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -146,6 +148,10 @@
 		1360FFFC1ED9DF8800DA1598 /* libopencv_videostab.2.4.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_videostab.2.4.13.dylib; path = "/usr/local/Cellar/opencv/HEAD-01e34b6/lib/libopencv_videostab.2.4.13.dylib"; sourceTree = "<absolute>"; };
 		1360FFFD1ED9DF8800DA1598 /* libopencv_videostab.2.4.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_videostab.2.4.13.dylib; path = "/usr/local/Cellar/opencv/HEAD-01e34b6/lib/libopencv_videostab.2.4.13.dylib"; sourceTree = "<absolute>"; };
 		1360FFFE1ED9DF8800DA1598 /* libopencv_videostab.2.4.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_videostab.2.4.13.dylib; path = "/usr/local/Cellar/opencv/HEAD-01e34b6/lib/libopencv_videostab.2.4.13.dylib"; sourceTree = "<absolute>"; };
+		13C327C41EE6589000F9B107 /* Equirect2Cubic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Equirect2Cubic.cpp; path = ../../src/Equirect2Cubic.cpp; sourceTree = "<group>"; };
+		13C327C51EE6589000F9B107 /* Equirect2Cubic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Equirect2Cubic.h; path = ../../src/Equirect2Cubic.h; sourceTree = "<group>"; };
+		13C327C61EE6589000F9B107 /* Tracker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Tracker.cpp; path = ../../src/Tracker.cpp; sourceTree = "<group>"; };
+		13C327C91EE6590800F9B107 /* Tracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Tracker.h; path = ../../src/Tracker.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -290,6 +296,10 @@
 		1360FFB41ED9DE9D00DA1598 = {
 			isa = PBXGroup;
 			children = (
+				13C327C41EE6589000F9B107 /* Equirect2Cubic.cpp */,
+				13C327C51EE6589000F9B107 /* Equirect2Cubic.h */,
+				13C327C61EE6589000F9B107 /* Tracker.cpp */,
+				13C327C91EE6590800F9B107 /* Tracker.h */,
 				1360004B1EDAAD3E00DA1598 /* Lock.h */,
 				1360004C1EDAAD3E00DA1598 /* main.cpp */,
 				1360004D1EDAAD3E00DA1598 /* Renderer.cpp */,
@@ -368,8 +378,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				136000521EDAAD3E00DA1598 /* Renderer.cpp in Sources */,
+				13C327C71EE6589000F9B107 /* Equirect2Cubic.cpp in Sources */,
 				136000511EDAAD3E00DA1598 /* main.cpp in Sources */,
 				136000531EDAAD3E00DA1598 /* RgbImage.cpp in Sources */,
+				13C327C81EE6589000F9B107 /* Tracker.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

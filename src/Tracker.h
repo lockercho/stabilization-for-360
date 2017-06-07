@@ -1,5 +1,18 @@
 #pragma once
 
+#ifndef _WIN32
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <GLUT/glut.h>
+#include <iostream>
+#include <unistd.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/video/video.hpp>
+#endif
+
 /**
  * \brief tracker for an octant
  */
