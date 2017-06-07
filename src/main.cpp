@@ -12,7 +12,10 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #endif
 
-#include "sphere_vertice.h"
+#include "PlainModel.h"
+//#include "SphereModel.h"
+#include "Equirect2Cubic.h"
+#include "Tracker.h"
 #include "res_texture.c"
 
 using namespace std;
@@ -156,6 +159,7 @@ VideoCapture capture;
 bool opened_capture = false;
 
 cv::Mat RGB, YUV;
+Tracker tracker;
 
 void
 TexFunc(void)
@@ -176,19 +180,28 @@ TexFunc(void)
         cout<<"Capture Finished"<<endl;
     }
     
+	auto cube_face_size = 256;
+
+	Equirect2Cubic myTransForm(RGB.cols, RGB.rows, cube_face_size, cube_face_size);
+
+	Mat result[6];
+
+	for (int i = 0; i<6; i++)
+	{
+		result[i] = Mat(cube_face_size, cube_face_size, RGB.type());
+		myTransForm.remapWithMap(RGB, result[i], i);
+	}
+
+	tracker.Track(result);
+    
+    glEnable(GL_TEXTURE_2D);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+
     cvtColor(RGB, RGB, CV_BGR2RGB);
 
-//    glEnable(GL_TEXTURE_2D);
-//    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-//
-//    
-//    
-//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
-//                 GL_UNSIGNED_BYTE, (uint8_t*) RGB.data);
-    
     glActiveTexture(GL_TEXTURE0);
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -209,14 +222,14 @@ TexFunc(void)
 
 int init_resources() {
     
-    nVertex = sizeof(sprite_vertices);
+    nVertex = sizeof(model_vertices);
     glGenBuffers(1, &vbo_sprite_vertices);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_sprite_vertices);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(sprite_vertices), sprite_vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(model_vertices), model_vertices, GL_STATIC_DRAW);
     
     glGenBuffers(1, &vbo_sprite_texcoords);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_sprite_texcoords);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(sprite_texcoords), sprite_texcoords, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(model_texcoords), model_texcoords, GL_STATIC_DRAW);
     
     glActiveTexture(GL_TEXTURE0);
     glGenTextures(1, &texture_id);

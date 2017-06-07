@@ -1,8 +1,9 @@
 #ifndef sphere_vetice_h
 #define sphere_vetice_h
 #include <OpenGL/gl3.h>
+#include <vector>
 
-GLfloat sprite_vertices[] = {
+GLfloat model_vertices[] = {
     0.049068, 0.998795, 0.000000,
     0.000000, 0.998795, 0.049068,
     0.000000, 1.000000, 0.000000,
@@ -12293,7 +12294,7 @@ GLfloat sprite_vertices[] = {
     0.594812, -0.594812, 0.540738,
 };
 
-GLfloat sprite_texcoords[] = {
+GLfloat model_texcoords[] = {
     1.000000, 0.015625,
     0.750000, 0.015625,
     1.000000, 0.000000,
