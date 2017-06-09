@@ -16,8 +16,6 @@
 #include "Tracker.h"
 #include "PlainModel.h"
 //#include "SphereModel.h"
-#include "Equirect2Cubic.h"
-#include "Tracker.h"
 #include "res_texture.c"
 
 using namespace std;
@@ -387,6 +385,19 @@ int main(int argc, char **argv) {
     glutInitDisplayMode(type);
     glutInitWindowSize(width/2, height/2);
     glutCreateWindow("360 video");
+
+#ifdef _WIN32
+
+	glewExperimental = TRUE;
+	GLenum err = glewInit();
+	if (err != GLEW_OK) {
+		// Problem: glewInit failed, something is seriously wrong.
+		cout << "glewInit failed: " << glewGetErrorString(err) << endl;
+		exit(1);
+	}
+
+#endif
+
     if (!glutExtensionSupported("GL_EXT_abgr")) {
         printf("Couldn't find abgr extension.\n");
         exit(0);

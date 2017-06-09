@@ -5,6 +5,9 @@
 
 #pragma once
 
+// define _NO_CRT_STDIO_INLINE 1 and link legacy_stdio_definitions.lib to workaround clang/c2 build fail
+#define _NO_CRT_STDIO_INLINE 1
+
 #define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
 #define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT 1
 
@@ -24,13 +27,10 @@
 
 // TODO:  在此參考您的程式所需要的其他標頭
 
-#include <gl/GL.h>
-#include <gl/GLU.h>
+#include <GL/glew.h>
+#include <GL/glut.h>
 
-#include <GLUT/glut.h>
-#include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/video.hpp>
 
 #define _USE_MATH_DEFINES // for C
