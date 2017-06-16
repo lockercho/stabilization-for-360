@@ -35,3 +35,13 @@
 
 #define _USE_MATH_DEFINES // for C
 #include <math.h>
+
+#define EIGEN_DONT_VECTORIZE // clang/c2 didn't support intrinsic, Intrinsic not yet implemented!
+#include <Eigen/Eigen>
+
+#include <opengv/relative_pose/methods.hpp>
+#include <opengv/relative_pose/CentralRelativeAdapter.hpp>
+#include <opengv/relative_pose/NoncentralRelativeMultiAdapter.hpp>
+#include <opengv/sac/Ransac.hpp>
+#include <opengv/sac_problems/relative_pose/CentralRelativePoseSacProblem.hpp>
+#include <opengv/sac_problems/relative_pose/MultiNoncentralRelativePoseSacProblem.hpp>

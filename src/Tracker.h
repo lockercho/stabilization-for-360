@@ -77,6 +77,10 @@ private:
 	 */
 	std::vector<std::vector<cv::Point2f>> trackedFeatures[6];
 
+	/**
+	 * \brief number of precessed frames
+	 */
+	int frameCount = 0;
 public:
 
 	/**

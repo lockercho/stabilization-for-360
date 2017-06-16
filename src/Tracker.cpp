@@ -1,5 +1,6 @@
 #include "Tracker.h"
 
+#ifndef _WIN32
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
@@ -14,7 +15,7 @@
 #include <opengv/sac/MultiRansac.hpp>
 #include <opengv/sac_problems/relative_pose/MultiNoncentralRelativePoseSacProblem.hpp>
 #include <fstream>
-
+#endif
 
 using namespace Eigen;
 using namespace opengv;
@@ -55,10 +56,7 @@ bool SubTracker::Track(cv::Mat& img)
 			isKeyFrame = false;
 			for (auto i = 0; i < status.size(); ++i)
 			{
-				if (status[i])
-				{
-					prevCorners.push_back(corners[i]);
-				}
+				prevCorners.push_back(corners.at(i));
 			}
 		}
 	}
@@ -71,7 +69,8 @@ void Tracker::Track(cv::Mat(&imgs)[6])
 {
 	bool isKeyFrames[6];
 
-	// TODO parallelize here
+	frameCount++;
+
 	for (auto i = 0; i < 6; ++i)
 	{
 		isKeyFrames[i] = subTrackers[i].Track(imgs[i]);
@@ -79,10 +78,18 @@ void Tracker::Track(cv::Mat(&imgs)[6])
 
 	bool hadKeyFrames = isKeyFrames[0] || isKeyFrames[1] || isKeyFrames[2] || isKeyFrames[3] || isKeyFrames[4] || isKeyFrames[5];
 
+	if (frameCount > 29.97 * 3) // fps 29.97, 3 seconds
+	{
+		hadKeyFrames = true;
+	}
+
 	if (hadKeyFrames)
 	{
-		// TODO stabilize here
+		frameCount = 0;
+	}
 
+	if (hadKeyFrames)
+	{
         // if not the first key frame
         if(!KeyFrames[1].empty())
         {
@@ -91,7 +98,7 @@ void Tracker::Track(cv::Mat(&imgs)[6])
                 // set bearing vector of the features as the normalized [u v 1]
                 bearingVectors_t bearingVectors1;
                 bearingVectors_t bearingVectors2;
-                for (int f=0;f<subTrackers[frameNum].prevCorners.size();f++)
+                for (int f=0;f<trackedFeatures[frameNum].at(0).size();f++)
                 {
                     Eigen::Vector3d present(subTrackers[frameNum].prevCorners.at(f).x,subTrackers[frameNum].prevCorners.at(f).y,1);
                     present= present/present.norm();
