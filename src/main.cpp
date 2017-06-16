@@ -154,12 +154,103 @@ GLuint create_shader(const char* filename, GLenum type)
     return res;
 }
 
-std::string filename = "walk_short.mp4";
+void writeVideo(FILE * out)
+{
+    
+    GLint vp[4];
+    glGetIntegerv( GL_VIEWPORT, vp );
+    
+    int x,y, w,h;
+    x = vp[0];
+    y = vp[1];
+    w = vp[2];
+    h = vp[3];
+    
+    int j;
+    
+    unsigned char *bottomup_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
+    unsigned char *topdown_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
+    
+    
+    //Byte alignment (that is, no alignment)
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    
+    glReadPixels( x, y, w, h, GL_RGB, GL_UNSIGNED_BYTE, bottomup_pixel);
+    for( j=0; j<h; j++ )
+        memcpy( &topdown_pixel[j*w*3], &bottomup_pixel[(h-j-1)*w*3], w*3*sizeof(unsigned char) );
+    
+    
+    if(out==NULL )
+    {
+        printf( "[Error] : SaveScreen()\n");
+//        exit(-1);
+        return;
+    }
+    
+//    fprintf( f0, "P6\n%d %d\n255\n", w, h);
+    fwrite( topdown_pixel, sizeof(unsigned char), w*h*3, out);
+//    fclose( f0 );
+    
+    free(bottomup_pixel);
+    free(topdown_pixel);
+}
+
+void save_screen( const char *spath )
+{
+    
+    GLint vp[4];
+    glGetIntegerv( GL_VIEWPORT, vp );
+    
+    int x,y, w,h;
+    x = vp[0];
+    y = vp[1];
+    w = vp[2];
+    h = vp[3];
+    
+    int j;
+    
+    unsigned char *bottomup_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
+    unsigned char *topdown_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
+    
+    
+    //Byte alignment (that is, no alignment)
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    
+    glReadPixels( x, y, w, h, GL_RGB, GL_UNSIGNED_BYTE, bottomup_pixel);
+    for( j=0; j<h; j++ )
+        memcpy( &topdown_pixel[j*w*3], &bottomup_pixel[(h-j-1)*w*3], w*3*sizeof(unsigned char) );
+    
+    
+    FILE *f0 = fopen( spath, "wb" );
+    if( f0==NULL )
+    {
+        printf( "[Error] : SaveScreen(), Cannot open %s for writting.\n", spath );
+        exit(-1);
+    }
+    
+    fprintf( f0, "P6\n%d %d\n255\n", w, h);
+    fwrite( topdown_pixel, sizeof(unsigned char), w*h*3, f0);
+    fclose( f0 );
+    
+    free(bottomup_pixel);
+    free(topdown_pixel);
+}
+
+std::string filename = "cut.mp4";
 VideoCapture capture;
 bool opened_capture = false;
 
 cv::Mat RGB, YUV;
 Tracker tracker;
+
+FILE * result_video = NULL;
+
+// fake rotation matrix
+//float R = {
+//    1.0, 0.0, 3.0,
+//    0.0, 1.0, 3.0,
+//    0.0, 0.0, 1.0,
+//};
 
 void
 TexFunc(void)
@@ -178,21 +269,23 @@ TexFunc(void)
     // Check if the frame has been read correctly or not
     if(RGB.empty()) {
         cout<<"Capture Finished"<<endl;
+        fclose(result_video);
+        exit(0);
     }
     
 	auto cube_face_size = 256;
 
-	Equirect2Cubic myTransForm(RGB.cols, RGB.rows, cube_face_size, cube_face_size);
+//	Equirect2Cubic myTransForm(RGB.cols, RGB.rows, cube_face_size, cube_face_size);
+//
+//	Mat result[6];
+//
+//	for (int i = 0; i<6; i++)
+//	{
+//		result[i] = Mat(cube_face_size, cube_face_size, RGB.type());
+//		myTransForm.remapWithMap(RGB, result[i], i);
+//	}
 
-	Mat result[6];
-
-	for (int i = 0; i<6; i++)
-	{
-		result[i] = Mat(cube_face_size, cube_face_size, RGB.type());
-		myTransForm.remapWithMap(RGB, result[i], i);
-	}
-
-	tracker.Track(result);
+//	tracker.Track(result);
     
     glEnable(GL_TEXTURE_2D);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -217,6 +310,56 @@ TexFunc(void)
                  GL_UNSIGNED_BYTE, // type
                  RGB.data);
     
+    if(result_video == NULL) {
+        GLint vp[4];
+        glGetIntegerv( GL_VIEWPORT, vp );
+        
+        int x,y, w,h;
+        x = vp[0];
+        y = vp[1];
+        w = vp[2];
+        h = vp[3];
+        char ffmpeg_comm[300];
+        snprintf(ffmpeg_comm, 300,"/usr/local/bin/ffmpeg -v warning -vcodec rawvideo -f rawvideo -pix_fmt rgb24 -s %dx%d -i pipe:0 -vcodec h264 -r 60 -y /Users/lockercho/workspace/GPU/final_project/stabilization-for-360/out.avi", w, h);
+        result_video = popen(ffmpeg_comm, "w");
+    }
+    
+    GLint vp[4];
+    glGetIntegerv( GL_VIEWPORT, vp );
+    
+    int x,y, w,h;
+    x = vp[0];
+    y = vp[1];
+    w = vp[2];
+    h = vp[3];
+    
+    int j;
+    
+    unsigned char *bottomup_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
+    unsigned char *topdown_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
+    
+    
+    //Byte alignment (that is, no alignment)
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadBuffer(GL_FRONT);
+    glReadPixels( x, y, w, h, GL_RGB, GL_UNSIGNED_BYTE, bottomup_pixel);
+    for( j=0; j<h; j++ )
+        memcpy( &topdown_pixel[j*w*3], &bottomup_pixel[(h-j-1)*w*3], w*3*sizeof(unsigned char) );
+    
+    
+    if(result_video==NULL )
+    {
+        printf( "[Error] : SaveScreen()\n");
+        //        exit(-1);
+        return;
+    }
+    
+    fwrite( topdown_pixel, sizeof(unsigned char), w*h*3, result_video);
+
+    
+    free(bottomup_pixel);
+    free(topdown_pixel);
+
 }
 
 
