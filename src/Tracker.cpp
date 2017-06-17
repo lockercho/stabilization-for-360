@@ -20,7 +20,6 @@
 using namespace Eigen;
 using namespace opengv;
 
-
 bool SubTracker::Track(cv::Mat& img)
 {
 	cv::Mat yuv;
@@ -65,6 +64,66 @@ bool SubTracker::Track(cv::Mat& img)
 	return isKeyFrame;
 }
 
+opengv::transformation_t Tracker::GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive)
+{
+	// set bearing vector of the features as the normalized [u v 1]
+	bearingVectors_t bearingVectors1;
+	bearingVectors_t bearingVectors2;
+
+	auto previousFeatures = features.at(begin);
+	auto presentFeatures = features.at(end);
+
+	auto previousFeaturesCount = previousFeatures.size();
+	auto presentFeaturesCount = presentFeatures.size();
+
+	auto featuresCount = std::min(previousFeaturesCount, presentFeaturesCount);
+
+	for (auto p = 0; p < featuresCount; ++p)
+	{
+		Eigen::Vector3d previous(previousFeatures.at(p).x, previousFeatures.at(p).y, 1);
+		previous = previous / previous.norm();
+
+		Eigen::Vector3d present(presentFeatures.at(p).x, presentFeatures.at(p).y, 1);
+		present = present / present.norm();
+
+		bearingVectors1.push_back(previous);
+		bearingVectors2.push_back(present);
+	}
+
+	//create a central relative adapter
+	relative_pose::CentralRelativeAdapter adapter(
+		bearingVectors1,
+		bearingVectors2);
+
+	sac::Ransac<
+		sac_problems::relative_pose::CentralRelativePoseSacProblem> ransac;
+
+	std::shared_ptr<
+		sac_problems::relative_pose::CentralRelativePoseSacProblem> relposeproblem_ptr(
+			new sac_problems::relative_pose::CentralRelativePoseSacProblem(
+				adapter,
+				sac_problems::relative_pose::CentralRelativePoseSacProblem::STEWENIUS));
+
+	ransac.sac_model_ = relposeproblem_ptr;
+	ransac.threshold_ = 2.0 * (1.0 - cos(atan(sqrt(2.0) * 0.5 / 800.0)));
+	ransac.max_iterations_ = 50;
+	ransac.computeModel();
+
+	/*** ransac.model_coefficients_ is the result ***/
+
+	auto inlierRatio = static_cast<double>(ransac.inliers_.size()) / static_cast<double>(featuresCount);
+
+	if (recursive && inlierRatio < 0.5 && end - begin != 1)
+	{
+		end = begin + ((end - begin) / 2);
+		return GetKeyframeRotation(features, begin, end, recursive);
+	}
+	else
+	{
+		return ransac.model_coefficients_;
+	}
+}
+
 void Tracker::Track(cv::Mat(&imgs)[6])
 {
 	bool isKeyFrames[6];
@@ -90,50 +149,59 @@ void Tracker::Track(cv::Mat(&imgs)[6])
 
 	if (hadKeyFrames)
 	{
-        // if not the first key frame
-        if(!KeyFrames[1].empty())
-        {
-            for (int frameNum=0;frameNum<6;frameNum++)
-            {
-                // set bearing vector of the features as the normalized [u v 1]
-                bearingVectors_t bearingVectors1;
-                bearingVectors_t bearingVectors2;
-                for (int f=0;f<trackedFeatures[frameNum].at(0).size();f++)
-                {
-                    Eigen::Vector3d present(subTrackers[frameNum].prevCorners.at(f).x,subTrackers[frameNum].prevCorners.at(f).y,1);
-                    present= present/present.norm();
-                    Eigen::Vector3d previous(trackedFeatures[frameNum].at(0).at(f).x,trackedFeatures[frameNum].at(0).at(f).y,1);
-                    previous= previous/previous.norm();
-                    bearingVectors1.push_back(previous);
-                    bearingVectors2.push_back(present);
-                }
-                //create a central relative adapter
-                relative_pose::CentralRelativeAdapter adapter(bearingVectors1,
-                                                              bearingVectors2);
-                sac::Ransac<
-                sac_problems::relative_pose::CentralRelativePoseSacProblem> ransac;
-                std::shared_ptr<
-                sac_problems::relative_pose::CentralRelativePoseSacProblem> relposeproblem_ptr(
-                                                                                               new sac_problems::relative_pose::CentralRelativePoseSacProblem(
-                                                                                                                                                              adapter,
-                                                                                                                                                              sac_problems::relative_pose::CentralRelativePoseSacProblem::STEWENIUS));
-                ransac.sac_model_ = relposeproblem_ptr;
-                ransac.threshold_ = 2.0*(1.0 - cos(atan(sqrt(2.0)*0.5/800.0)));
-                ransac.max_iterations_ = 50;
-                ransac.computeModel();
-                printf("%d:\n",frameNum);
-                
-                /*** ransac.model_coefficients_ is the result ***/
-                std::cout<<ransac.model_coefficients_<<std::endl;
+		// if not the first key frame
+		if (!KeyFrames[1].empty())
+		{
+			std::vector<std::vector<cv::Point2f>> features[6];
 
-            }
-//            imshow("present",imgs[1]);
-//            imshow("previous",KeyFrames[1]);
-//            cv::waitKey(0);
-        }
+			for (int frameNum = 0; frameNum < 6; frameNum++)
+			{
+				std::vector<std::vector<cv::Point2f>> f(trackedFeatures[frameNum]);
 
+				features[frameNum] = f;
 
-		// stabilize end
+				features[frameNum].push_back(subTrackers[frameNum].prevCorners);
+			}
+
+			int begin = 0;
+			int end = features[0].size() - 1;
+
+			do
+			{
+				auto keyloc = end;
+
+				for (int frameNum = 0; frameNum < 6; frameNum++)
+				{
+					auto e = end;
+
+					GetKeyframeRotation(features[frameNum], begin, e, true);
+
+					if (e <= keyloc)
+					{
+						keyloc = e;
+					}
+				}
+
+				for (int frameNum = 0; frameNum < 6; frameNum++)
+				{
+					auto e = keyloc;
+					auto rotation = GetKeyframeRotation(features[frameNum], begin, e, false);
+
+					printf("%d:\n", frameNum);
+
+					std::cout << rotation << std::endl;
+				}
+
+				if (keyloc != end)
+				{
+					begin = keyloc;
+				}
+				else
+				{
+					break;
+				}
+			} while (true);
+		}
 
 		for (auto i = 0; i < 6; ++i)
 		{
