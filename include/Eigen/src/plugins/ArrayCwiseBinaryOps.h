@@ -118,10 +118,11 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Cmp ## COMPARATOR ## ReturnType \
 OP(const Scalar& s) const { \
   return this->OP(Derived::PlainObject::Constant(rows(), cols(), s)); \
 } \
-//EIGEN_DEVICE_FUNC friend EIGEN_STRONG_INLINE const RCmp ## COMPARATOR ## ReturnType \
-//OP(const Scalar& s, const Derived& d) { \
-//  return Derived::PlainObject::Constant(d.rows(), d.cols(), s).OP(d); \
-//}
+template<typename Scalar, typename Derived> \
+EIGEN_DEVICE_FUNC friend EIGEN_STRONG_INLINE const RCmp ## COMPARATOR ## ReturnType \
+OP(const Scalar& s, const Derived& d) { \
+  return Derived::PlainObject::Constant(d.rows(), d.cols(), s).OP(d); \
+}
 
 #define EIGEN_MAKE_CWISE_COMP_R_OP(OP, R_OP, RCOMPARATOR) \
 template<typename OtherDerived> \
@@ -135,10 +136,11 @@ inline const RCmp ## RCOMPARATOR ## ReturnType \
 OP(const Scalar& s) const { \
   return Derived::PlainObject::Constant(rows(), cols(), s).R_OP(*this); \
 } \
-//friend inline const Cmp ## RCOMPARATOR ## ReturnType \
-//OP(const Scalar& s, const Derived& d) { \
-//  return d.R_OP(Derived::PlainObject::Constant(d.rows(), d.cols(), s)); \
-//}
+template<typename Scalar, typename Derived> \
+friend inline const Cmp ## RCOMPARATOR ## ReturnType \
+OP(const Scalar& s, const Derived& d) { \
+  return d.R_OP(Derived::PlainObject::Constant(d.rows(), d.cols(), s)); \
+}
 
 
 

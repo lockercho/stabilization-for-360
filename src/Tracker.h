@@ -81,6 +81,17 @@ private:
 	 * \brief number of precessed frames
 	 */
 	int frameCount = 0;
+
+	/**
+	 * \brief get rotation between keyframe
+	 * \param features feature points of frames
+	 * \param begin first keyframe index in features
+	 * \param end second keyframe index in features, this param will be set to actual index after call
+	 * \param recursive recursively search the rotation until the inlier ratio > 0.5 or there is no space to find new keyframes. otherwise, do once.
+	 * \return rotation between keyframe
+	 */
+	opengv::transformation_t GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive);
+
 public:
 
 	/**

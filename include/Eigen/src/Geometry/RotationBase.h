@@ -77,12 +77,12 @@ class RotationBase
     { return l.derived() * r.toRotationMatrix(); }
 
     /** \returns the concatenation of a scaling \a l with the rotation \a r */
-    //EIGEN_DEVICE_FUNC friend inline Transform<Scalar,Dim,Affine> operator*(const DiagonalMatrix<Scalar,Dim>& l, const Derived& r)
-    //{ 
-    //  Transform<Scalar,Dim,Affine> res(r);
-    //  res.linear().applyOnTheLeft(l);
-    //  return res;
-    //}
+    EIGEN_DEVICE_FUNC friend inline Transform<Scalar,Dim,Affine> operator*(const DiagonalMatrix<Scalar,Dim>& l, const Derived& r)
+    { 
+      Transform<Scalar,Dim,Affine> res(r);
+      res.linear().applyOnTheLeft(l);
+      return res;
+    }
 
     /** \returns the concatenation of the rotation \c *this with a transformation \a t */
     template<int Mode, int Options>
