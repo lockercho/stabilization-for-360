@@ -1,5 +1,5 @@
-#ifndef PlainModel_h
-#define PlainModel_h
+#ifndef SimplePlainModel_h
+#define SimplePlainModel_h
 //     0           1
 //   -1,-1------ 1,-1
 //    |      /     |

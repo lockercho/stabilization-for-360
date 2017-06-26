@@ -16,7 +16,12 @@
 #include "Tracker.h"
 #include "PlainModel.h"
 //#include "SphereModel.h"
-#include "res_texture.c"
+#include "VideoHandler.h"
+#include <pthread.h>
+
+
+
+//#include "res_texture.c"
 
 using namespace std;
 using namespace cv;
@@ -236,10 +241,16 @@ void save_screen( const char *spath )
     free(topdown_pixel);
 }
 
-std::string filename = "cut.mp4";
+std::string filename = "walk_short.mp4";
+VideoHandler videoHandler(filename);
+
+
+
 VideoCapture capture;
 bool opened_capture = false;
 
+
+int nFrames = 0;
 cv::Mat RGB, YUV;
 Tracker tracker;
 
@@ -252,54 +263,169 @@ FILE * result_video = NULL;
 //    0.0, 0.0, 1.0,
 //};
 
+void * videoProcessThread(void *) {
+    videoHandler.start();
+    pause();
+    return NULL;
+}
+
+
+void printRotations(std::vector<cv::Mat> R) {
+    std::cout << std::endl << "printRotations: " << std::endl;
+    for(int k=0 ; k<6 ; k++) {
+        std::cout << k << ":" << std::endl;
+        for(int i=0 ; i<9 ; i++) {
+            std::cout << R[k].at<double>(i/3, i%3) << ", ";
+            if((i+1) % 3 == 0) {
+                std::cout << std::endl;
+            }
+        }
+        std::cout << std::endl;
+        std::cout << std::endl;
+    }
+}
+
+Equirect2Cubic myTransForm(1920, 1080, 256, 256);
+
+void applyRotation(float x , float y, float &nx, float &ny, cv::Mat * trans) {
+//    if(x < 0 || x >=1 || y < 0 || y >= 1) {
+//        std::cout << "XY: "<< x << ", " << y << std::endl;
+//    }
+    // src = [x, y, 1]
+    // trans = 1x9 vector
+    std::vector<float> res;
+    nx = x * trans->at<double>(0, 0) + y * trans->at<double>(1, 0) + 1.0 * trans->at<double>(2, 0);
+    ny = x * trans->at<double>(0, 1) + y * trans->at<double>(1, 1) + 1.0 * trans->at<double>(2, 1);
+}
+
+// https://en.wikipedia.org/wiki/Great-circle_distance
+float getGreatCircalDistance(float u1, float v1, float u2, float v2) {
+    // u = [0, 1] represents [0, 2PI]
+    // v = [0, 1] represents [0, PI]
+    // let r = 1.0
+    float r = 1.0;
+    u1 *= 2 * M_PI;
+    u2 *= 2 * M_PI;
+    v1 *= M_PI;
+    v2 *= M_PI;
+    float d = r * acos(sin(v1)*sin(v2)+cos(v1)*cos(v2)*cos(u1-u2));
+    return d;
+}
+
+int Rmap[8][3] = {
+    {0, 1, 4},
+    {1, 2, 4},
+    {2, 3, 4},
+    {3, 0, 4},
+    {0, 1, 5},
+    {1, 2, 5},
+    {2, 3, 5},
+    {3, 0, 5},
+};
+
+cv::Mat getBlendedRotation(std::vector<cv::Mat> * R, float u, float v) {
+    // 6 rotations cut sphere into 8 areas, 2x4
+    int Rmap_index = (int) (u*4) + (v>0.5 ? 4 : 0);
+    if(Rmap_index >=8) Rmap_index-=1;
+    // get blended
+    cv::Mat res = cv::Mat_<double>::zeros(3,3);
+    float d = 1000;
+    for(int i=0 ;i<3 ; i++) {
+        int r_index = Rmap[Rmap_index][i];
+        float Ru = myTransForm.cubeFacing[r_index][0] / 2 / M_PI + 0.5;
+        float Rv = myTransForm.cubeFacing[r_index][1] / M_PI + 0.5;
+        float dis = getGreatCircalDistance(u, v, Ru, Rv);
+        if(d > dis && r_index <4) {
+            res = R->at(r_index);
+            d = dis;
+        }
+//        res += dis * R->at(r_index);
+//        d += dis;
+    }
+    return res; // d;
+}
+
+int display_index = 0;
 void
 TexFunc(void)
 {
-    if(!opened_capture) {
-        if(!capture.open(filename))
-        {
-            cout<<"Video Not Found"<<endl;
-            return ;
-        }
-        opened_capture = true;
+    cv::Mat * RGB;
+    std::vector<cv::Mat> R;
+    fprintf(stderr, "display: %d\n", display_index);
+    
+    if(videoHandler.isFrameOk(display_index)) {
+        RGB = videoHandler.getFrame(display_index);
+        R = videoHandler.getRotation(display_index);
+        display_index++;
+    } else {
+        return ;
     }
-    
-    capture >> RGB;  //Read a frame from the video
-    
-    // Check if the frame has been read correctly or not
-    if(RGB.empty()) {
-        cout<<"Capture Finished"<<endl;
-        fclose(result_video);
-        exit(0);
-    }
-    
-	auto cube_face_size = 256;
-
-//	Equirect2Cubic myTransForm(RGB.cols, RGB.rows, cube_face_size, cube_face_size);
-//
-//	Mat result[6];
-//
-//	for (int i = 0; i<6; i++)
-//	{
-//		result[i] = Mat(cube_face_size, cube_face_size, RGB.type());
-//		myTransForm.remapWithMap(RGB, result[i], i);
-//	}
-
-//	tracker.Track(result);
     
     glEnable(GL_TEXTURE_2D);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+    
+    
+    nVertex = sizeof(model_vertices);
 
-    cvtColor(RGB, RGB, CV_BGR2RGB);
+    // model definition
+    glGenBuffers(1, &vbo_sprite_vertices);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_sprite_vertices);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(model_vertices), model_vertices, GL_STATIC_DRAW);
+    
+    // texture coordinate definition
+    // apply rotations to texcoord
+    int nTexs =sizeof(model_texcoords) / sizeof(float);
+    GLfloat coords[nTexs];
+
+    for(int i=0 ; i<nTexs /2 ; i+=1) {
+        float tmpx, tmpy;
+//        int fid;
+        float u = model_texcoords[i*2];
+        float v = model_texcoords[i*2+1];
+        cv::Mat B = getBlendedRotation(&R, u, v);
+        // get faceId
+        // myTransForm.uv2xy(model_texcoords[i*2], model_texcoords[i*2+1], 256, 256, fid, tmpx, tmpy);
+        
+        // get regional u,v by faceid
+        if(v >= 0.25 && v <= 0.75) {
+            // middle points
+            int fid = (int)(u * 4);
+            // 0 ~ 1
+//            float uc = u * 4 - fid; // 0.0 ~ 0.25 -> 0.0 ~ 1.0
+//            float vc = (v - 0.25) / 0.5; // 0.25 ~ 0.75 -> 0.0 ~ 1.0
+//            float tmpu, tmpv;
+//            applyRotation(uc, vc, tmpu, tmpv, &B);
+//            coords[i*2] = (tmpu + (int) (u*4)) / 4.0;
+//            coords[i*2+1] = tmpv * 0.5 + 0.25;  // 0.0 ~1.0 -> 0.25 ~ 0.75
+//            
+            // -1 ~ 1
+            float uc = (u * 4 - fid) * 2 - 1.0; // 0.0 ~ 0.25 -> 0.0 ~ 1.0
+            float vc = ((v - 0.25) / 0.5) * 2 - 1.0; // 0.25 ~ 0.75 -> 0.0 ~ 1.0
+            float tmpu, tmpv;
+            applyRotation(uc, vc, tmpu, tmpv, &B);
+            coords[i*2] = ((tmpu + 1.0) / 2 + fid) / 4.0;
+            coords[i*2+1] = (tmpv + 1.0) / 2 * 0.5 + 0.25;  // 0.0 ~1.0 -> 0.25 ~ 0.75
+        } else {
+            coords[i*2] = model_texcoords[i*2];
+            coords[i*2+1] = model_texcoords[i*2+1];
+        }
+
+//        std::cout << "coorX: "<< model_texcoords[i*2]<<", coorY: " << model_texcoords[i*2+1]<< ", tmpx: " << tmpx << ", tmpy: " << tmpy << std::endl;
+//        
+    }
+    
+    glGenBuffers(1, &vbo_sprite_texcoords);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_sprite_texcoords);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(coords), coords, GL_STATIC_DRAW);
 
     glActiveTexture(GL_TEXTURE0);
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_2D, texture_id);
-    
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    
     glTexImage2D(GL_TEXTURE_2D, // target
                  0,  // level, 0 = base, no minimap,
                  GL_RGB, // internalformat
@@ -308,85 +434,64 @@ TexFunc(void)
                  0,  // border, always 0 in OpenGL ES
                  GL_RGB,  // format
                  GL_UNSIGNED_BYTE, // type
-                 RGB.data);
+                 RGB->data);
     
-    if(result_video == NULL) {
-        GLint vp[4];
-        glGetIntegerv( GL_VIEWPORT, vp );
-        
-        int x,y, w,h;
-        x = vp[0];
-        y = vp[1];
-        w = vp[2];
-        h = vp[3];
-        char ffmpeg_comm[300];
-        snprintf(ffmpeg_comm, 300,"/usr/local/bin/ffmpeg -v warning -vcodec rawvideo -f rawvideo -pix_fmt rgb24 -s %dx%d -i pipe:0 -vcodec h264 -r 60 -y /Users/lockercho/workspace/GPU/final_project/stabilization-for-360/out.avi", w, h);
-        result_video = popen(ffmpeg_comm, "w");
-    }
+//    free(coords);
     
-    GLint vp[4];
-    glGetIntegerv( GL_VIEWPORT, vp );
+//    if(result_video == NULL) {
+//        GLint vp[4];
+//        glGetIntegerv( GL_VIEWPORT, vp );
+//        
+//        int x,y, w,h;
+//        x = vp[0];
+//        y = vp[1];
+//        w = vp[2];
+//        h = vp[3];
+//        char ffmpeg_comm[300];
+//        snprintf(ffmpeg_comm, 300,"/usr/local/bin/ffmpeg -v warning -vcodec rawvideo -f rawvideo -pix_fmt rgb24 -s %dx%d -i pipe:0 -vcodec h264 -r 60 -y /Users/lockercho/workspace/GPU/final_project/stabilization-for-360/out.avi", w, h);
+//        result_video = popen(ffmpeg_comm, "w");
+//    }
+//    
+//    GLint vp[4];
+//    glGetIntegerv( GL_VIEWPORT, vp );
+//    
+//    int x,y, w,h;
+//    x = vp[0];
+//    y = vp[1];
+//    w = vp[2];
+//    h = vp[3];
+//    
+//    int j;
     
-    int x,y, w,h;
-    x = vp[0];
-    y = vp[1];
-    w = vp[2];
-    h = vp[3];
-    
-    int j;
-    
-    unsigned char *bottomup_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
-    unsigned char *topdown_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
-    
-    
-    //Byte alignment (that is, no alignment)
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadBuffer(GL_FRONT);
-    glReadPixels( x, y, w, h, GL_RGB, GL_UNSIGNED_BYTE, bottomup_pixel);
-    for( j=0; j<h; j++ )
-        memcpy( &topdown_pixel[j*w*3], &bottomup_pixel[(h-j-1)*w*3], w*3*sizeof(unsigned char) );
-    
-    
-    if(result_video==NULL )
-    {
-        printf( "[Error] : SaveScreen()\n");
-        //        exit(-1);
-        return;
-    }
-    
-    fwrite( topdown_pixel, sizeof(unsigned char), w*h*3, result_video);
-
-    
-    free(bottomup_pixel);
-    free(topdown_pixel);
+//    unsigned char *bottomup_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
+//    unsigned char *topdown_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
+//    
+//    
+//    //Byte alignment (that is, no alignment)
+//    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+//    glReadBuffer(GL_FRONT);
+//    glReadPixels( x, y, w, h, GL_RGB, GL_UNSIGNED_BYTE, bottomup_pixel);
+//    for( j=0; j<h; j++ )
+//        memcpy( &topdown_pixel[j*w*3], &bottomup_pixel[(h-j-1)*w*3], w*3*sizeof(unsigned char) );
+//    
+//    
+//    if(result_video==NULL )
+//    {
+//        printf( "[Error] : SaveScreen()\n");
+//        //        exit(-1);
+//        return;
+//    }
+//    
+//    fwrite( topdown_pixel, sizeof(unsigned char), w*h*3, result_video);
+//
+//    
+//    free(bottomup_pixel);
+//    free(topdown_pixel);
 
 }
 
 
 int init_resources() {
-    
-    nVertex = sizeof(model_vertices);
-    glGenBuffers(1, &vbo_sprite_vertices);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_sprite_vertices);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(model_vertices), model_vertices, GL_STATIC_DRAW);
-    
-    glGenBuffers(1, &vbo_sprite_texcoords);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_sprite_texcoords);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(model_texcoords), model_texcoords, GL_STATIC_DRAW);
-    
-    glActiveTexture(GL_TEXTURE0);
-    glGenTextures(1, &texture_id);
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, // target
-                 0,  // level, 0 = base, no minimap,
-                 GL_RGB, // internalformat
-                 res_texture.width,  // width
-                 res_texture.height,  // height
-                 0,  // border, always 0 in OpenGL ES
-                 GL_RGB,  // format
-                 GL_UNSIGNED_BYTE, // type
-                 res_texture.pixel_data);
     
     GLint link_ok = GL_FALSE;
     
@@ -516,8 +621,28 @@ void onIdle() {
     glutPostRedisplay();
 }
 
+bool initPthreadAttr(pthread_attr_t* attr) {
+    int stackSize = 1024 * 512;
+    return (pthread_attr_init(attr) == 0 && pthread_attr_setstacksize(attr, stackSize) == 0);
+}
+
+bool releasePthreadAttr(pthread_attr_t* attr) {
+    return pthread_attr_destroy(attr) == 0;
+}
+
 int main(int argc, char **argv) {
     GLenum type;
+    
+    // init video processing thread
+    pthread_attr_t attr;
+    initPthreadAttr(&attr);
+    
+    // init websocket
+    pthread_t videoThread;
+    pthread_create(&videoThread, &attr, videoProcessThread, (void*)NULL);
+    
+    releasePthreadAttr(&attr);
+
     
     glutInit(&argc, argv);
     

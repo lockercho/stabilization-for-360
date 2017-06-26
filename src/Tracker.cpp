@@ -94,6 +94,8 @@ opengv::transformation_t Tracker::GetKeyframeRotation(std::vector<std::vector<cv
 	relative_pose::CentralRelativeAdapter adapter(
 		bearingVectors1,
 		bearingVectors2);
+    
+    int a = adapter.getNumberCorrespondences();
 
 	sac::Ransac<
 		sac_problems::relative_pose::CentralRelativePoseSacProblem> ransac;
@@ -124,9 +126,11 @@ opengv::transformation_t Tracker::GetKeyframeRotation(std::vector<std::vector<cv
 	}
 }
 
-void Tracker::Track(cv::Mat(&imgs)[6])
+std::vector<cv::Mat> Tracker::Track(cv::Mat(&imgs)[6])
 {
 	bool isKeyFrames[6];
+    
+    std::vector<cv::Mat> rotations;
 
 	frameCount++;
 
@@ -182,15 +186,39 @@ void Tracker::Track(cv::Mat(&imgs)[6])
 					}
 				}
 
+                FILE * file = fopen("/tmp/Rs.log", "a");
+                
 				for (int frameNum = 0; frameNum < 6; frameNum++)
 				{
 					auto e = keyloc;
 					auto rotation = GetKeyframeRotation(features[frameNum], begin, e, false);
-
+                    
 					printf("%d:\n", frameNum);
+                    fprintf(file, "%d:\n", frameNum);
 
 					std::cout << rotation << std::endl;
+                    
+                    for(int i=0; i<3; i++) {
+                        for(int j=0 ; j<3 ; j++) {
+                            fprintf(file, "%f, ", rotation(i, j));
+                        }
+                        fprintf(file, "\n");
+                    }
+                    
+                    double tmp = rotation(0,0);
+                    std::vector<double> rot;
+                    double m[3][3];
+                    for(int i=0 ;i<3 ; i++) {
+                        for(int j=0; j<3 ; j++) {
+                            m[i][j] = rotation(i, j);
+                        }
+                    }
+                    cv::Mat M = cv::Mat(3, 3, CV_64F, m).inv();
+                    
+                    rotations.push_back(M);
 				}
+                fclose(file);
+                
 
 				if (keyloc != end)
 				{
@@ -217,4 +245,5 @@ void Tracker::Track(cv::Mat(&imgs)[6])
 			trackedFeatures[i].push_back(subTrackers[i].prevCorners);
 		}
 	}
+    return rotations;
 }

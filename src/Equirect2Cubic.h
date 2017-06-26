@@ -39,12 +39,18 @@ class Equirect2Cubic
      * 0 1 2 3
      *     5
      * */
-    float cubeFacing[6][2];
+    
     cv::Mat mapX[6];
     cv::Mat mapY[6];
-
+    const float an = sin(M_PI / 4);
+    const float ak = cos(M_PI / 4);
+    
     // public function
   public:
+    float cubeFacing[6][2];
+    void xy2uv(int faceId, int x, int y, int sourceWidth, int sourceHeight, int width, int height, float &u, float &v);
+    void uv2xy(float u, float v, int width, int height, int &faceId, float &x, float &y);
+
     void remapWithMap(cv::Mat &in, cv::Mat &out, int faceId);
 
 };

@@ -1,5 +1,5 @@
-#ifndef sphere_vetice_h
-#define sphere_vetice_h
+#ifndef SphereModel_h
+#define SphereModel_h
 #include <OpenGL/gl3.h>
 #include <vector>
 

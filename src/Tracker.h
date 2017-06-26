@@ -11,7 +11,10 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/video.hpp>
+#include <opengv/relative_pose/methods.hpp>
 #endif
+
+typedef opengv::transformation_t Rotation;
 
 /**
  * \brief tracker for an octant
@@ -91,6 +94,11 @@ private:
 	 * \return rotation between keyframe
 	 */
 	opengv::transformation_t GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive);
+    
+    /**
+     * \brief the 
+     */
+    int processedCount = 0;
 
 public:
 
@@ -98,5 +106,7 @@ public:
 	 * \brief do track
 	 * \param imgs six BGR cv::Mat frames
 	 */
-	void Track(cv::Mat(&imgs)[6]);
+	std::vector<cv::Mat> Track(cv::Mat(&imgs)[6]);
+    
+    bool hasNewR(int last_R);
 };
