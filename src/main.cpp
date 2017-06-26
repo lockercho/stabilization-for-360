@@ -17,7 +17,7 @@
 #include "PlainModel.h"
 //#include "SphereModel.h"
 #include "VideoHandler.h"
-#include <pthread.h>
+#include <thread>
 
 
 
@@ -263,10 +263,8 @@ FILE * result_video = NULL;
 //    0.0, 0.0, 1.0,
 //};
 
-void * videoProcessThread(void *) {
+void videoProcessThread() {
     videoHandler.start();
-    pause();
-    return NULL;
 }
 
 
@@ -621,28 +619,30 @@ void onIdle() {
     glutPostRedisplay();
 }
 
-bool initPthreadAttr(pthread_attr_t* attr) {
-    int stackSize = 1024 * 512;
-    return (pthread_attr_init(attr) == 0 && pthread_attr_setstacksize(attr, stackSize) == 0);
-}
-
-bool releasePthreadAttr(pthread_attr_t* attr) {
-    return pthread_attr_destroy(attr) == 0;
-}
+//bool initPthreadAttr(pthread_attr_t* attr) {
+//    int stackSize = 1024 * 512;
+//    return (pthread_attr_init(attr) == 0 && pthread_attr_setstacksize(attr, stackSize) == 0);
+//}
+//
+//bool releasePthreadAttr(pthread_attr_t* attr) {
+//    return pthread_attr_destroy(attr) == 0;
+//}
 
 int main(int argc, char **argv) {
     GLenum type;
     
     // init video processing thread
-    pthread_attr_t attr;
-    initPthreadAttr(&attr);
+//    pthread_attr_t attr;
+//    initPthreadAttr(&attr);
+//    
+//    // init websocket
+//    pthread_t videoThread;
+//    pthread_create(&videoThread, &attr, videoProcessThread, (void*)NULL);
+//    
+//    releasePthreadAttr(&attr);
     
-    // init websocket
-    pthread_t videoThread;
-    pthread_create(&videoThread, &attr, videoProcessThread, (void*)NULL);
-    
-    releasePthreadAttr(&attr);
-
+    // execute thread
+    thread mThread(videoProcessThread);
     
     glutInit(&argc, argv);
     
