@@ -64,6 +64,68 @@ bool SubTracker::Track(cv::Mat& img)
 	return isKeyFrame;
 }
 
+template <typename T>
+T ARobustLossFunction(const T s)
+{
+	const T a = T(0.01);
+	return pow(a, 2) * log(T(1) + s / pow(a, 2));
+}
+
+struct E1CostFunctor
+{
+	Eigen::Vector3d p;
+
+	Eigen::Vector3d p1;
+
+	E1CostFunctor(Eigen::Vector3d p, Eigen::Vector3d p1)
+	{
+		this->p = p;
+		this->p1 = p1;
+	}
+
+	template <typename T>
+	bool operator()(const T* const Rj, const T* const Rj1, T* residual) const
+	{
+		Eigen::Quaternion<T> q = Eigen::Map<const Eigen::Quaternion<T>>(Rj);
+		Eigen::Quaternion<T> q1 = Eigen::Map<const Eigen::Quaternion<T>>(Rj1);
+
+		auto s = ((q * p.cast<T>()) - (q1 * p1.cast<T>())).squaredNorm();
+		residual[0] = ARobustLossFunction(s);
+		residual[1] = ARobustLossFunction(s);
+		return true;
+	}
+};
+
+struct E2CostFunctor
+{
+	Eigen::Vector3d p;
+
+	Eigen::Vector3d p1;
+
+	Eigen::Vector3d p2;
+
+	E2CostFunctor(Eigen::Vector3d p, Eigen::Vector3d p1, Eigen::Vector3d p2)
+	{
+		this->p = p;
+		this->p1 = p1;
+		this->p2 = p2;
+	}
+
+	template <typename T>
+	bool operator()(const T* const Rj, const T* const Rj1, const T* const Rj2, T* residual) const
+	{
+		Eigen::Quaternion<T> q = Eigen::Map<const Eigen::Quaternion<T>>(Rj);
+		Eigen::Quaternion<T> q1 = Eigen::Map<const Eigen::Quaternion<T>>(Rj1);
+		Eigen::Quaternion<T> q2 = Eigen::Map<const Eigen::Quaternion<T>>(Rj2);
+
+		auto s = (-(q * p.cast<T>()) + T(2) * (q1 * p1.cast<T>()) - (q2 * p2.cast<T>())).squaredNorm();
+		residual[0] = ARobustLossFunction(s);
+		residual[1] = ARobustLossFunction(s);
+		residual[2] = ARobustLossFunction(s);
+		return true;
+	}
+};
+
 opengv::transformation_t Tracker::GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive)
 {
 	// set bearing vector of the features as the normalized [u v 1]
@@ -148,11 +210,6 @@ std::vector<cv::Mat> Tracker::Track(cv::Mat(&imgs)[6])
 
 	if (hadKeyFrames)
 	{
-		frameCount = 0;
-	}
-
-	if (hadKeyFrames)
-	{
 		// if not the first key frame
 		if (!KeyFrames[1].empty())
 		{
@@ -186,24 +243,108 @@ std::vector<cv::Mat> Tracker::Track(cv::Mat(&imgs)[6])
 					}
 				}
 
-                FILE * file = fopen("/tmp/Rs.log", "a");
+                //FILE * file = fopen("/tmp/Rs.log", "a");
                 
 				for (int frameNum = 0; frameNum < 6; frameNum++)
 				{
 					auto e = keyloc;
-					auto rotation = GetKeyframeRotation(features[frameNum], begin, e, false);
-                    
-					printf("%d:\n", frameNum);
-                    fprintf(file, "%d:\n", frameNum);
+					auto transformation = GetKeyframeRotation(features[frameNum], begin, e, false);
+					auto rotation = opengv::rotation_t(transformation.block<3, 3>(0, 0));
 
-					std::cout << rotation << std::endl;
+					// Rki
+					auto inverseRotation = StoredRotations[frameNum].inverse();
+
+					// Rki+1
+					auto inverseRotationNext = opengv::rotation_t(StoredRotations[frameNum] * rotation).inverse();
+
+					auto quaternion = Eigen::Quaternion<double>(inverseRotation);
+					auto quaternionNext = Eigen::Quaternion<double>(inverseRotationNext);
+
+					// Rj
+					auto quaternions = std::vector<Eigen::Quaternion<double>>();
+					for (auto i = begin; i < e; ++i)
+					{
+						auto t = begin / e;
+						auto initQuaternion = quaternion.slerp(t, quaternionNext);
+
+						quaternions.push_back(initQuaternion);
+					}
+
+					ceres::Problem problem;
+
+					for (auto innerFrameIndex = 0; innerFrameIndex < quaternions.size(); ++innerFrameIndex)
+					{
+						if (innerFrameIndex + 1 < quaternions.size())
+						{
+							for (auto p_index = 0; p_index < features[frameNum].at(innerFrameIndex).size() - 1; p_index++)
+							{
+								auto p = features[frameNum].at(innerFrameIndex).at(p_index);
+								auto p1 = features[frameNum].at(innerFrameIndex + 1).at(p_index + 1);
+
+								auto v = Eigen::Vector3d(p.x, p.y, 1);
+								auto v1 = Eigen::Vector3d(p1.x, p1.y, 1);
+
+								auto cost_function = new ceres::AutoDiffCostFunction<E1CostFunctor, 2, 4, 4>(new E1CostFunctor(v, v1));
+
+								problem.AddResidualBlock(
+									cost_function,
+									nullptr,
+									quaternions.at(innerFrameIndex).coeffs().data(),
+									quaternions.at(innerFrameIndex + 1).coeffs().data());
+							}
+						}
+
+						if (innerFrameIndex + 2 < quaternions.size())
+						{
+							for (auto p_index = 0; p_index < features[frameNum].at(innerFrameIndex).size() - 2; p_index++)
+							{
+								auto p = features[frameNum].at(innerFrameIndex).at(p_index);
+								auto p1 = features[frameNum].at(innerFrameIndex + 1).at(p_index + 1);
+								auto p2 = features[frameNum].at(innerFrameIndex + 2).at(p_index + 2);
+
+								auto v = Eigen::Vector3d(p.x, p.y, 1);
+								auto v1 = Eigen::Vector3d(p1.x, p1.y, 1);
+								auto v2 = Eigen::Vector3d(p2.x, p2.y, 1);
+
+								auto cost_function = new ceres::AutoDiffCostFunction<E2CostFunctor, 3, 4, 4, 4>(new E2CostFunctor(v, v1, v2));
+
+								problem.AddResidualBlock(
+									cost_function,
+									nullptr,
+									quaternions.at(innerFrameIndex).coeffs().data(),
+									quaternions.at(innerFrameIndex + 1).coeffs().data(),
+									quaternions.at(innerFrameIndex + 2).coeffs().data());
+							}
+						}
+
+						if (problem.NumResidualBlocks() != 0)
+						{
+							problem.SetParameterization(quaternions.at(innerFrameIndex).coeffs().data(), new ceres::EigenQuaternionParameterization());
+						}
+					}
+
+					ceres::Solver::Options options;
+					options.minimizer_progress_to_stdout = true;
+
+					ceres::Solver::Summary summary;
+					ceres::Solve(options, &problem, &summary);
+
+					std::cout << summary.BriefReport() << "\n";
+
+					// TODO: the quaternions has the optimized R for each innerframe
+
                     
-                    for(int i=0; i<3; i++) {
-                        for(int j=0 ; j<3 ; j++) {
-                            fprintf(file, "%f, ", rotation(i, j));
-                        }
-                        fprintf(file, "\n");
-                    }
+					//printf("%d:\n", frameNum);
+                    //fprintf(file, "%d:\n", frameNum);
+
+					//std::cout << rotation << std::endl;
+                    
+                    //for(int i=0; i<3; i++) {
+                    //    for(int j=0 ; j<3 ; j++) {
+                    //        fprintf(file, "%f, ", rotation(i, j));
+                    //    }
+                    //    fprintf(file, "\n");
+                    //}
                     
                     double tmp = rotation(0,0);
                     std::vector<double> rot;
@@ -216,8 +357,10 @@ std::vector<cv::Mat> Tracker::Track(cv::Mat(&imgs)[6])
                     cv::Mat M = cv::Mat(3, 3, CV_64F, m).inv();
                     
                     rotations.push_back(M);
+
+					this->StoredRotations[frameNum] *= rotation;
 				}
-                fclose(file);
+                //fclose(file);
                 
 
 				if (keyloc != end)
@@ -229,6 +372,29 @@ std::vector<cv::Mat> Tracker::Track(cv::Mat(&imgs)[6])
 					break;
 				}
 			} while (true);
+		}
+		else
+		{
+			std::vector<std::vector<cv::Point2f>> features[6];
+
+			for (int frameNum = 0; frameNum < 6; frameNum++)
+			{
+				std::vector<std::vector<cv::Point2f>> f(trackedFeatures[frameNum]);
+
+				features[frameNum] = f;
+
+				features[frameNum].push_back(subTrackers[frameNum].prevCorners);
+			}
+
+			int begin = 0;
+			int end = features[0].size() - 1;
+
+			for (auto i = 0; i < 6; i++)
+			{
+				auto transformation = GetKeyframeRotation(features[i], begin, end, false);
+				auto rotation = rotation_t(transformation.block<3, 3>(0, 0));
+				this->StoredRotations[i] = rotation;
+			}
 		}
 
 		for (auto i = 0; i < 6; ++i)
@@ -245,5 +411,11 @@ std::vector<cv::Mat> Tracker::Track(cv::Mat(&imgs)[6])
 			trackedFeatures[i].push_back(subTrackers[i].prevCorners);
 		}
 	}
-    return rotations;
+
+	if (hadKeyFrames)
+	{
+		frameCount = 0;
+	}
+
+	return rotations;
 }

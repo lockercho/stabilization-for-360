@@ -100,6 +100,11 @@ private:
      */
     int processedCount = 0;
 
+	/**
+	 * \brief the rotations chain
+	 */
+	opengv::rotation_t StoredRotations[6];
+
 public:
 
 	/**

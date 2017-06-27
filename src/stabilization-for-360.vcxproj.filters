@@ -27,6 +27,9 @@
     <ClCompile Include="Tracker.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
+    <ClCompile Include="VideoHandler.cpp">
+      <Filter>原始程式檔</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -39,6 +42,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="Tracker.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoHandler.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

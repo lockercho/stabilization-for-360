@@ -24,6 +24,7 @@
 #include <tchar.h>
 
 #include <iostream>
+#include <thread>
 
 // TODO:  在此參考您的程式所需要的其他標頭
 
@@ -45,3 +46,7 @@
 #include <opengv/sac/Ransac.hpp>
 #include <opengv/sac_problems/relative_pose/CentralRelativePoseSacProblem.hpp>
 #include <opengv/sac_problems/relative_pose/MultiNoncentralRelativePoseSacProblem.hpp>
+#include <opengv/math/quaternion.hpp>
+
+#define GLOG_NO_ABBREVIATED_SEVERITIES
+#include <ceres/ceres.h>

@@ -10,6 +10,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <thread>
 #endif
 
 #include "Equirect2Cubic.h"
@@ -17,7 +18,7 @@
 #include "PlainModel.h"
 //#include "SphereModel.h"
 #include "VideoHandler.h"
-#include <thread>
+
 
 
 
@@ -656,7 +657,7 @@ int main(int argc, char **argv) {
 
 #ifdef _WIN32
 
-	glewExperimental = TRUE;
+	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
 	if (err != GLEW_OK) {
 		// Problem: glewInit failed, something is seriously wrong.
