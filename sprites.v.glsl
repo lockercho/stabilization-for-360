@@ -5,5 +5,5 @@ uniform mat4 mvp;
 
 void main(void) {
   gl_Position = mvp * v_coord;
-  f_texcoord = v_texcoord;
+  f_texcoord = vec2(v_texcoord.x, 1-v_texcoord.y);
 }

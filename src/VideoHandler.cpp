@@ -19,7 +19,7 @@ void VideoHandler::start() {
         // Check if the frame has been read correctly or not
         if(RGB.empty()) {
             cout<<"Capture Finished"<<endl;
-            fclose(result_video);
+            //fclose(result_video);
             break;
         }
         cvtColor(RGB, RGB, CV_BGR2RGB);

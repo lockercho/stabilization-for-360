@@ -475,8 +475,8 @@ TexFunc(void)
         w = vp[2];
         h = vp[3];
         char ffmpeg_comm[300];
-        snprintf(ffmpeg_comm, 300,"/usr/local/bin/ffmpeg -v warning -vcodec rawvideo -f rawvideo -pix_fmt rgb24 -s %dx%d -i pipe:0 -vcodec h264 -r 60 -y /Users/lockercho/workspace/GPU/final_project/stabilization-for-360/result.avi", w, h);
-        result_video = popen(ffmpeg_comm, "w");
+        //snprintf(ffmpeg_comm, 300,"/usr/local/bin/ffmpeg -v warning -vcodec rawvideo -f rawvideo -pix_fmt rgb24 -s %dx%d -i pipe:0 -vcodec h264 -r 60 -y /Users/lockercho/workspace/GPU/final_project/stabilization-for-360/result.avi", w, h);
+        //result_video = popen(ffmpeg_comm, "w");
     }
     
     GLint vp[4];
@@ -504,7 +504,7 @@ TexFunc(void)
     
     if(result_video==NULL )
     {
-        printf( "[Error] : SaveScreen()\n");
+        //printf( "[Error] : SaveScreen()\n");
         //        exit(-1);
         return;
     }

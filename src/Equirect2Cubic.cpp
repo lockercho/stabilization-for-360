@@ -41,9 +41,9 @@ Equirect2Cubic::Equirect2Cubic(int sourceWidth, int sourceHeight, int width, int
   //initial the mapx and mapy for each face
     
     // save xy and uv map
-    bool shouldWrite = fopen("/tmp/xyuv", "r") == NULL;
-    FILE* file;
-    if(shouldWrite) file = fopen("/tmp/xyuv", "w");
+    //bool shouldWrite = fopen("/tmp/xyuv", "r") == NULL;
+    //FILE* file;
+    //if(shouldWrite) file = fopen("/tmp/xyuv", "w");
     
   for (int faceId=0;faceId<6;faceId++)
   {
@@ -56,8 +56,8 @@ Equirect2Cubic::Equirect2Cubic(int sourceWidth, int sourceHeight, int width, int
             float u, v;
             xy2uv(faceId, x, y, sourceWidth, sourceHeight, width, height, u, v);
             
-            if(shouldWrite && x % 8 == 0 && y % 8 == 0)
-                fprintf(file, "%d %d %d %f %f\n", faceId, x, y, u, v);
+            //if(shouldWrite && x % 8 == 0 && y % 8 == 0)
+            //    fprintf(file, "%d %d %d %f %f\n", faceId, x, y, u, v);
             
             
             // Save the result for this pixel in map
@@ -66,10 +66,10 @@ Equirect2Cubic::Equirect2Cubic(int sourceWidth, int sourceHeight, int width, int
         }
     }
   }
-    if(shouldWrite){
-    fflush(file);
-    fclose(file);
-    }
+    //if(shouldWrite){
+    //fflush(file);
+    //fclose(file);
+    //}
 }
 
 void Equirect2Cubic::xy2uv(int faceId, int x, int y, int sourceWidth, int sourceHeight, int width, int height, float &u, float &v) {

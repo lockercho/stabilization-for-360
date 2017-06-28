@@ -1,7 +1,10 @@
 #ifndef PlainModel_h
 #define PlainModel_h
+
+#ifndef _WIN32
 #include <OpenGL/gl3.h>
 #include <vector>
+#endif
 
 GLfloat model_vertices[] = {
     0.077980, 0.374470, 0.000000,
