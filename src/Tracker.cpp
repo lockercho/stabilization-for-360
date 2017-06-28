@@ -172,7 +172,7 @@ struct E2CostFunctor
 
 opengv::transformation_t Tracker::GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive)
 {
-	// set bearing vector of the features as the normalized [u v 1]
+	// set bearing vector of the features as the normalized [u v 128]
 	bearingVectors_t bearingVectors1;
 	bearingVectors_t bearingVectors2;
 
@@ -186,10 +186,10 @@ opengv::transformation_t Tracker::GetKeyframeRotation(std::vector<std::vector<cv
 
 	for (auto p = 0; p < featuresCount; ++p)
 	{
-		Eigen::Vector3d previous(previousFeatures.at(p).x, previousFeatures.at(p).y, 1);
+		Eigen::Vector3d previous(previousFeatures.at(p).x, previousFeatures.at(p).y, 128);
 		previous = previous / previous.norm();
 
-		Eigen::Vector3d present(presentFeatures.at(p).x, presentFeatures.at(p).y, 1);
+		Eigen::Vector3d present(presentFeatures.at(p).x, presentFeatures.at(p).y, 128);
 		present = present / present.norm();
 
 		bearingVectors1.push_back(previous);
