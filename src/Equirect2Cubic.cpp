@@ -39,6 +39,12 @@ Equirect2Cubic::Equirect2Cubic(int sourceWidth, int sourceHeight, int width, int
 //    cubeFacing[5][1] = M_PI/2;
 
   //initial the mapx and mapy for each face
+    
+    // save xy and uv map
+    bool shouldWrite = fopen("/tmp/xyuv", "r") == NULL;
+    FILE* file;
+    if(shouldWrite) file = fopen("/tmp/xyuv", "w");
+    
   for (int faceId=0;faceId<6;faceId++)
   {
     this->mapX[faceId] = cv::Mat(height, width, CV_32F);
@@ -50,12 +56,20 @@ Equirect2Cubic::Equirect2Cubic(int sourceWidth, int sourceHeight, int width, int
             float u, v;
             xy2uv(faceId, x, y, sourceWidth, sourceHeight, width, height, u, v);
             
+            if(shouldWrite && x % 2 ==0 && y % 2 == 0)
+                fprintf(file, "%d %d %d %f %f\n", faceId, x, y, u, v);
+            
+            
             // Save the result for this pixel in map
             this->mapX[faceId].at<float>(x, y) = u * (sourceWidth - 1);
             this->mapY[faceId].at<float>(x, y) = v * (sourceHeight - 1);
         }
     }
   }
+    if(shouldWrite){
+    fflush(file);
+    fclose(file);
+    }
 }
 
 void Equirect2Cubic::xy2uv(int faceId, int x, int y, int sourceWidth, int sourceHeight, int width, int height, float &u, float &v) {

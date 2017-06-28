@@ -26,7 +26,7 @@ private:
 	/**
 	 * \brief goodFeaturesToTrack's parameter maxCorners
 	 */
-	int maxCorners = 50;
+	int maxCorners = 100;
 
 	/**
 	 * \brief goodFeaturesToTrack's parameter qualityLevel
@@ -49,6 +49,8 @@ public:
 	 * \brief The feature points of previous frame.
 	 */
 	std::vector<cv::Point2f> prevCorners;
+    cv::Mat prevFrame;
+    cv::Mat currFrame;
 
 	/**
 	 * \brief do track
@@ -93,7 +95,7 @@ private:
 	 * \param recursive recursively search the rotation until the inlier ratio > 0.5 or there is no space to find new keyframes. otherwise, do once.
 	 * \return rotation between keyframe
 	 */
-	opengv::transformation_t GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive);
+	opengv::transformation_t GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive, std::vector<cv::Mat>& prevframes, std::vector<cv::Mat>& currframes);
     
     /**
      * \brief the 

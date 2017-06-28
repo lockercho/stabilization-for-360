@@ -15,6 +15,10 @@
 #include <opengv/sac/MultiRansac.hpp>
 #include <opengv/sac_problems/relative_pose/MultiNoncentralRelativePoseSacProblem.hpp>
 #include <fstream>
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #endif
 
 using namespace Eigen;
@@ -35,6 +39,7 @@ bool SubTracker::Track(cv::Mat& img)
 	{
 		isKeyFrame = true;
 		goodFeaturesToTrack(luma, prevCorners, maxCorners, qualityLevel, minDistance);
+            prevFrame = luma;
 	}
 	else
 	{
@@ -57,6 +62,7 @@ bool SubTracker::Track(cv::Mat& img)
 			{
 				prevCorners.push_back(corners.at(i));
 			}
+            currFrame = luma;
 		}
 	}
 
@@ -64,7 +70,45 @@ bool SubTracker::Track(cv::Mat& img)
 	return isKeyFrame;
 }
 
-opengv::transformation_t Tracker::GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive)
+
+void plotMatches(cv::Mat& img1, cv::Mat& img2, std::vector<cv::Point2f>& p1, std::vector<cv::Point2f>& p2) {
+    
+    // write to file to debug
+    cv::imwrite("/Users/lockercho/workspace/GPU/final_project/test/prevImg.jpg", img1);
+    cv::imwrite("/Users/lockercho/workspace/GPU/final_project/test/currImg.jpg", img2);
+    
+    //
+    FILE * f1 = fopen("/Users/lockercho/workspace/GPU/final_project/test/prevKey.txt", "w");
+    FILE * f2 = fopen("/Users/lockercho/workspace/GPU/final_project/test/currKey.txt", "w");
+    
+    for(int i=0 ; i<p1.size() ; i++) {
+        fprintf(f1, "%f %f\n", p1[i].x, p1[i].y);
+        fprintf(f2, "%f %f\n", p2[i].x, p2[i].y);
+    }
+    
+    fclose(f1);
+    fclose(f2);
+    
+//    cv::Mat out;
+//    std::vector<cv::DMatch> matches;
+//    std::vector<cv::KeyPoint> k1;
+//    std::vector<cv::KeyPoint> k2;
+//    for(int i=0 ; i<p1.size() ; i++) {
+//        cv::DMatch v = cv::DMatch(i, i, 0);
+//        matches.push_back(v);
+//        
+//        k1.push_back(cv::KeyPoint(p1[i], 1.f));
+//        k2.push_back(cv::KeyPoint(p2[i], 1.f));
+//        
+//    }
+    
+//    cv::drawMatches(img1, k1, img2, k2, matches, out);
+//    cv::namedWindow("matches", 1);
+//    cv::imshow("matches", out);
+//    cv::waitKey(0);
+}
+
+opengv::transformation_t Tracker::GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive, std::vector<cv::Mat>& prevframes, std::vector<cv::Mat>& currframes)
 {
 	// set bearing vector of the features as the normalized [u v 1]
 	bearingVectors_t bearingVectors1;
@@ -95,8 +139,6 @@ opengv::transformation_t Tracker::GetKeyframeRotation(std::vector<std::vector<cv
 		bearingVectors1,
 		bearingVectors2);
     
-    int a = adapter.getNumberCorrespondences();
-
 	sac::Ransac<
 		sac_problems::relative_pose::CentralRelativePoseSacProblem> ransac;
 
@@ -118,10 +160,25 @@ opengv::transformation_t Tracker::GetKeyframeRotation(std::vector<std::vector<cv
 	if (recursive && inlierRatio < 0.5 && end - begin != 1)
 	{
 		end = begin + ((end - begin) / 2);
-		return GetKeyframeRotation(features, begin, end, recursive);
+		return GetKeyframeRotation(features, begin, end, recursive, prevframes, currframes);
 	}
 	else
 	{
+//        plotMatches(prevframes[0], currframes[0], previousFeatures, presentFeatures);
+//        
+//        FILE * file = fopen("/Users/lockercho/workspace/GPU/final_project/test/Rs.log", "w");
+//        
+//        for(int i=0; i<3; i++) {
+//            for(int j=0 ; j<3 ; j++) {
+//                fprintf(file, "%f, ", ransac.model_coefficients_(i, j));
+//            }
+//            fprintf(file, "\n");
+//        }
+//        fclose(file);
+//        
+//        exit(0);
+        
+        
 		return ransac.model_coefficients_;
 	}
 }
@@ -157,6 +214,8 @@ std::vector<cv::Mat> Tracker::Track(cv::Mat(&imgs)[6])
 		if (!KeyFrames[1].empty())
 		{
 			std::vector<std::vector<cv::Point2f>> features[6];
+            std::vector<cv::Mat> prevframes[6];
+            std::vector<cv::Mat> currframes[6];
 
 			for (int frameNum = 0; frameNum < 6; frameNum++)
 			{
@@ -165,6 +224,9 @@ std::vector<cv::Mat> Tracker::Track(cv::Mat(&imgs)[6])
 				features[frameNum] = f;
 
 				features[frameNum].push_back(subTrackers[frameNum].prevCorners);
+                
+                prevframes[frameNum].push_back(subTrackers[frameNum].prevFrame);
+                currframes[frameNum].push_back(subTrackers[frameNum].currFrame);
 			}
 
 			int begin = 0;
@@ -178,32 +240,18 @@ std::vector<cv::Mat> Tracker::Track(cv::Mat(&imgs)[6])
 				{
 					auto e = end;
 
-					GetKeyframeRotation(features[frameNum], begin, e, true);
+					GetKeyframeRotation(features[frameNum], begin, e, true, prevframes[frameNum], currframes[frameNum]);
 
 					if (e <= keyloc)
 					{
 						keyloc = e;
 					}
 				}
-
-                FILE * file = fopen("/tmp/Rs.log", "a");
                 
 				for (int frameNum = 0; frameNum < 6; frameNum++)
 				{
 					auto e = keyloc;
-					auto rotation = GetKeyframeRotation(features[frameNum], begin, e, false);
-                    
-					printf("%d:\n", frameNum);
-                    fprintf(file, "%d:\n", frameNum);
-
-					std::cout << rotation << std::endl;
-                    
-                    for(int i=0; i<3; i++) {
-                        for(int j=0 ; j<3 ; j++) {
-                            fprintf(file, "%f, ", rotation(i, j));
-                        }
-                        fprintf(file, "\n");
-                    }
+					auto rotation = GetKeyframeRotation(features[frameNum], begin, e, false, prevframes[frameNum], currframes[frameNum]);
                     
                     double tmp = rotation(0,0);
                     std::vector<double> rot;
@@ -217,7 +265,6 @@ std::vector<cv::Mat> Tracker::Track(cv::Mat(&imgs)[6])
                     
                     rotations.push_back(M);
 				}
-                fclose(file);
                 
 
 				if (keyloc != end)

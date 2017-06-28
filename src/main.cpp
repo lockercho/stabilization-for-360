@@ -343,6 +343,7 @@ cv::Mat getBlendedRotation(std::vector<cv::Mat> * R, float u, float v) {
     return res; // d;
 }
 
+bool needOutput = false;
 int display_index = 0;
 void
 TexFunc(void)
@@ -434,57 +435,61 @@ TexFunc(void)
                  GL_UNSIGNED_BYTE, // type
                  RGB->data);
     
-//    free(coords);
+
     
-//    if(result_video == NULL) {
-//        GLint vp[4];
-//        glGetIntegerv( GL_VIEWPORT, vp );
-//        
-//        int x,y, w,h;
-//        x = vp[0];
-//        y = vp[1];
-//        w = vp[2];
-//        h = vp[3];
-//        char ffmpeg_comm[300];
-//        snprintf(ffmpeg_comm, 300,"/usr/local/bin/ffmpeg -v warning -vcodec rawvideo -f rawvideo -pix_fmt rgb24 -s %dx%d -i pipe:0 -vcodec h264 -r 60 -y /Users/lockercho/workspace/GPU/final_project/stabilization-for-360/out.avi", w, h);
-//        result_video = popen(ffmpeg_comm, "w");
-//    }
-//    
-//    GLint vp[4];
-//    glGetIntegerv( GL_VIEWPORT, vp );
-//    
-//    int x,y, w,h;
-//    x = vp[0];
-//    y = vp[1];
-//    w = vp[2];
-//    h = vp[3];
-//    
-//    int j;
+    if(!needOutput) {
+        return;
+    }
     
-//    unsigned char *bottomup_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
-//    unsigned char *topdown_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
-//    
-//    
-//    //Byte alignment (that is, no alignment)
-//    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-//    glReadBuffer(GL_FRONT);
-//    glReadPixels( x, y, w, h, GL_RGB, GL_UNSIGNED_BYTE, bottomup_pixel);
-//    for( j=0; j<h; j++ )
-//        memcpy( &topdown_pixel[j*w*3], &bottomup_pixel[(h-j-1)*w*3], w*3*sizeof(unsigned char) );
-//    
-//    
-//    if(result_video==NULL )
-//    {
-//        printf( "[Error] : SaveScreen()\n");
-//        //        exit(-1);
-//        return;
-//    }
-//    
-//    fwrite( topdown_pixel, sizeof(unsigned char), w*h*3, result_video);
-//
-//    
-//    free(bottomup_pixel);
-//    free(topdown_pixel);
+    if(result_video == NULL) {
+        GLint vp[4];
+        glGetIntegerv( GL_VIEWPORT, vp );
+        
+        int x,y, w,h;
+        x = vp[0];
+        y = vp[1];
+        w = vp[2];
+        h = vp[3];
+        char ffmpeg_comm[300];
+        snprintf(ffmpeg_comm, 300,"/usr/local/bin/ffmpeg -v warning -vcodec rawvideo -f rawvideo -pix_fmt rgb24 -s %dx%d -i pipe:0 -vcodec h264 -r 60 -y /Users/lockercho/workspace/GPU/final_project/stabilization-for-360/result.avi", w, h);
+        result_video = popen(ffmpeg_comm, "w");
+    }
+    
+    GLint vp[4];
+    glGetIntegerv( GL_VIEWPORT, vp );
+    
+    int x,y, w,h;
+    x = vp[0];
+    y = vp[1];
+    w = vp[2];
+    h = vp[3];
+    
+    int j;
+    
+    unsigned char *bottomup_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
+    unsigned char *topdown_pixel = (unsigned char *) malloc( w*h*3*sizeof(unsigned char) );
+    
+    
+    //Byte alignment (that is, no alignment)
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadBuffer(GL_FRONT);
+    glReadPixels( x, y, w, h, GL_RGB, GL_UNSIGNED_BYTE, bottomup_pixel);
+    for( j=0; j<h; j++ )
+        memcpy( &topdown_pixel[j*w*3], &bottomup_pixel[(h-j-1)*w*3], w*3*sizeof(unsigned char) );
+    
+    
+    if(result_video==NULL )
+    {
+        printf( "[Error] : SaveScreen()\n");
+        //        exit(-1);
+        return;
+    }
+    
+    fwrite( topdown_pixel, sizeof(unsigned char), w*h*3, result_video);
+
+    
+    free(bottomup_pixel);
+    free(topdown_pixel);
 
 }
 
