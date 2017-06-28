@@ -10,14 +10,15 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <thread>
 #endif
 
 #include "Equirect2Cubic.h"
 #include "Tracker.h"
-#include "PlainModel.h"
+#include "PlainModel2.h"
 //#include "SphereModel.h"
 #include "VideoHandler.h"
-#include <thread>
+
 
 
 
@@ -343,13 +344,23 @@ cv::Mat getBlendedRotation(std::vector<cv::Mat> * R, float u, float v) {
     return res; // d;
 }
 
+void getRotationIndex(int faceId, int display_index, std::vector<std::vector<Eigen::Quaternion<double> > > * R, int& j, int& k) {
+    for(j=faceId ;j<R->size() ; j+=6) {
+        if(display_index < R->at(j).size()) {
+            k = display_index;
+            return;
+        }
+        display_index -= R->at(j).size();
+    }
+}
+
 bool needOutput = false;
 int display_index = 0;
 void
 TexFunc(void)
 {
     cv::Mat * RGB;
-    std::vector<cv::Mat> R;
+    std::vector<std::vector<Eigen::Quaternion<double> > > R;
     fprintf(stderr, "display: %d\n", display_index);
     
     if(videoHandler.isFrameOk(display_index)) {
@@ -380,40 +391,38 @@ TexFunc(void)
     GLfloat coords[nTexs];
 
     for(int i=0 ; i<nTexs /2 ; i+=1) {
-        float tmpx, tmpy;
-//        int fid;
+        int tmpf, tmpx, tmpy;
         float u = model_texcoords[i*2];
         float v = model_texcoords[i*2+1];
-        cv::Mat B = getBlendedRotation(&R, u, v);
-        // get faceId
-        // myTransForm.uv2xy(model_texcoords[i*2], model_texcoords[i*2+1], 256, 256, fid, tmpx, tmpy);
-        
-        // get regional u,v by faceid
-        if(v >= 0.25 && v <= 0.75) {
-            // middle points
-            int fid = (int)(u * 4);
-            // 0 ~ 1
-//            float uc = u * 4 - fid; // 0.0 ~ 0.25 -> 0.0 ~ 1.0
-//            float vc = (v - 0.25) / 0.5; // 0.25 ~ 0.75 -> 0.0 ~ 1.0
-//            float tmpu, tmpv;
-//            applyRotation(uc, vc, tmpu, tmpv, &B);
-//            coords[i*2] = (tmpu + (int) (u*4)) / 4.0;
-//            coords[i*2+1] = tmpv * 0.5 + 0.25;  // 0.0 ~1.0 -> 0.25 ~ 0.75
-//            
-            // -1 ~ 1
-            float uc = (u * 4 - fid) * 2 - 1.0; // 0.0 ~ 0.25 -> 0.0 ~ 1.0
-            float vc = ((v - 0.25) / 0.5) * 2 - 1.0; // 0.25 ~ 0.75 -> 0.0 ~ 1.0
-            float tmpu, tmpv;
-            applyRotation(uc, vc, tmpu, tmpv, &B);
-            coords[i*2] = ((tmpu + 1.0) / 2 + fid) / 4.0;
-            coords[i*2+1] = (tmpv + 1.0) / 2 * 0.5 + 0.25;  // 0.0 ~1.0 -> 0.25 ~ 0.75
-        } else {
-            coords[i*2] = model_texcoords[i*2];
-            coords[i*2+1] = model_texcoords[i*2+1];
-        }
+        uv2xy(u, v, tmpf, tmpx, tmpy);
+        coords[i*2] = u;
+        coords[i*2+1] = v;
 
-//        std::cout << "coorX: "<< model_texcoords[i*2]<<", coorY: " << model_texcoords[i*2+1]<< ", tmpx: " << tmpx << ", tmpy: " << tmpy << std::endl;
-//        
+        int j, k;
+        getRotationIndex(tmpf, display_index, &R, j, k);
+        
+        // TODO: get blended rotation
+        
+        Eigen::Quaternion<double> rot = R[j][k];
+        
+//        cv::Mat B = getBlendedRotation(&R, u, v);
+        
+        // apply transform to x y
+        Eigen::Vector3d p(tmpx, tmpy, 1);
+        Eigen::Vector3d newp = rot * p;
+        newp.coeffRef(0);
+        
+        float newu, newv;
+        myTransForm.xy2uv(tmpf, newp.coeffRef(0), newp.coeffRef(1), 256, 256, 1920, 1080, newu, newv);
+//        std::cout << "tmpf: " << tmpf << ", tmpx: "<< tmpx << ", tmpy: " << tmpy<<", newu: " << newu << ", newv: "<< newv;
+//        std::cout << "newX: " << newp.coeffRef(0) << "newY: " << newp.coeffRef(1);
+//        std::cout <<std::endl;
+//        int a;
+//
+
+        coords[i*2] = newu;
+        coords[i*2+1] = newv;
+  
     }
     
     glGenBuffers(1, &vbo_sprite_texcoords);
@@ -645,7 +654,7 @@ int main(int argc, char **argv) {
 //    pthread_create(&videoThread, &attr, videoProcessThread, (void*)NULL);
 //    
 //    releasePthreadAttr(&attr);
-    
+    initNodeHash();
     // execute thread
     thread mThread(videoProcessThread);
     
@@ -661,7 +670,7 @@ int main(int argc, char **argv) {
 
 #ifdef _WIN32
 
-	glewExperimental = TRUE;
+	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
 	if (err != GLEW_OK) {
 		// Problem: glewInit failed, something is seriously wrong.

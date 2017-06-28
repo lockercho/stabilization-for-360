@@ -41,27 +41,27 @@ void VideoHandler::start() {
         }
         this->tmpMat.assign(result, result+6);
         
-        std::vector<cv::Mat> rotation = tracker.Track(result);
+        std::vector<std::vector<Eigen::Quaternion<double> > > rotation = tracker.Track(result);
         if(rotation.size() > 0) {
             // multiply with last rotation
-            if(allRotations.size() > 0) {
-                for(int i=0 ; i<6 ; i++) {
-                    cv::Mat tmp = rotation[i] * allRotations[allRotations.size()-1].rot[i];
-                    rotation[i] = tmp;
-                }
-            }
+//            if(allRotations.size() > 0) {
+//                for(int i=0 ; i<6 ; i++) {
+//                    cv::Mat tmp = rotation[i] * allRotations[allRotations.size()-1].rot[i];
+//                    rotation[i] = tmp;
+//                }
+//            }
             allRotations.push_back(R(rotation, nProcessedFrames, nFrames));
             nProcessedFrames = nFrames;
         }
     }
 }
 
-std::vector<cv::Mat> VideoHandler::getRotation(int index) {
+std::vector<std::vector<Eigen::Quaternion<double> > > VideoHandler::getRotation(int index) {
     for(int i=0 ; i<allRotations.size() ; i++ ) {
         if(allRotations[i].start <= index && allRotations[i].end > index) {
             return allRotations[i].rot;
         }
     }
-    std::vector<cv::Mat> dummy;
+    std::vector<std::vector<Eigen::Quaternion<double> > > dummy;
     return dummy;
 }

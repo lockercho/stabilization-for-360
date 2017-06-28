@@ -19,10 +19,10 @@ using namespace std;
 #define FRAME_BUF_SIZE 100
 
 struct R {
-    std::vector<cv::Mat> rot;
+    std::vector<std::vector<Eigen::Quaternion<double> > > rot;
     int start;
     int end;
-    R(std::vector<cv::Mat> r, int s, int e) {
+    R(std::vector<std::vector<Eigen::Quaternion<double> > > r, int s, int e) {
         rot = r;
         start = s;
         end = e;
@@ -64,7 +64,7 @@ public:
         return &frames[index % FRAME_BUF_SIZE];
     }
     
-    std::vector<cv::Mat> getRotation(int index);
+    std::vector<std::vector<Eigen::Quaternion<double> > > getRotation(int index);
 };
 
 #endif /* VideoHandler_h */

@@ -95,12 +95,17 @@ private:
 	 * \param recursive recursively search the rotation until the inlier ratio > 0.5 or there is no space to find new keyframes. otherwise, do once.
 	 * \return rotation between keyframe
 	 */
-	opengv::transformation_t GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive, std::vector<cv::Mat>& prevframes, std::vector<cv::Mat>& currframes);
+	opengv::transformation_t GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive);
     
     /**
      * \brief the 
      */
     int processedCount = 0;
+
+	/**
+	 * \brief the rotations chain
+	 */
+	opengv::rotation_t StoredRotations[6];
 
 public:
 
@@ -108,7 +113,7 @@ public:
 	 * \brief do track
 	 * \param imgs six BGR cv::Mat frames
 	 */
-	std::vector<cv::Mat> Track(cv::Mat(&imgs)[6]);
+	std::vector<std::vector<Eigen::Quaternion<double> > > Track(cv::Mat(&imgs)[6]);
     
     bool hasNewR(int last_R);
 };

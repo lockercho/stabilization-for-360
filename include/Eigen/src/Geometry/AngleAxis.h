@@ -109,8 +109,8 @@ public:
   { return QuaternionType(*this) * other; }
 
   /** Concatenates two rotations */
-  friend EIGEN_DEVICE_FUNC inline QuaternionType operator* (const QuaternionType& a, const AngleAxis& b)
-  { return a * QuaternionType(b); }
+  //friend EIGEN_DEVICE_FUNC inline QuaternionType operator* (const QuaternionType& a, const AngleAxis& b)
+  //{ return a * QuaternionType(b); }
 
   /** \returns the inverse rotation, i.e., an angle-axis with opposite rotation angle */
   EIGEN_DEVICE_FUNC AngleAxis inverse() const

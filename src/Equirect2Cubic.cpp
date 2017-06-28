@@ -56,7 +56,7 @@ Equirect2Cubic::Equirect2Cubic(int sourceWidth, int sourceHeight, int width, int
             float u, v;
             xy2uv(faceId, x, y, sourceWidth, sourceHeight, width, height, u, v);
             
-            if(shouldWrite && x % 2 ==0 && y % 2 == 0)
+            if(shouldWrite && x % 8 == 0 && y % 8 == 0)
                 fprintf(file, "%d %d %d %f %f\n", faceId, x, y, u, v);
             
             
@@ -98,7 +98,6 @@ void Equirect2Cubic::xy2uv(int faceId, int x, int y, int sourceWidth, int source
         u = atan2(ny, nx);
     } else {
         // Top face            // Map face pixel coordinates to [-1, 1] on plane
-        
         float d = sqrt(nx * nx + ny * ny);
         v = -M_PI / 2 + atan2(d, ak);
         u = atan2(-ny, nx);
@@ -138,90 +137,6 @@ std::vector<float> transform(std::vector<float> src, std::vector<float> trans) {
         res.push_back(src[0] * trans[i*3] + src[1] * trans[i*3+1] + src[2] * trans[i*3+2]);
     }
     return res;
-}
-
-void Equirect2Cubic::uv2xy(float u, float v, int width, int height, int &faceId, float &x, float &y) {
-//    [u, v, 1]
-//    u, v -> x, y, z
-//    
-    // u,v [0, 1] -> [-1, 1]
-    u = (u) * 2;
-    v = (v - 0.5) * 2;
-    
-    std::cout << "U2: " << u << ", V2: " << v <<std::endl;
-
-    u *= M_PI;     // 180 degree
-//    v *= M_PI / 2; // 90 degree
-    v = asin(v);
-    
-    // get face id
-    
-    // top face
-    if(v < -M_PI / 4) {
-        faceId = 4;
-        
-//        float d = sqrt(nx * nx + ny * ny);
-//        v = -M_PI / 2 + atan2(d, ak);
-//        u = atan2(-ny, nx);
-        
-    // bottom face
-    } else if(v > M_PI / 4) {
-        faceId = 5;
-    } else {
-        faceId = (int)((u + 1.0) * 2);
-    }
-    
-    const float ftu = this->cubeFacing[faceId][0];
-    const float ftv = this->cubeFacing[faceId][1];
-    
-    
-//    u += ftu; // should be 0 ~ PI / 4
-//    v += ftv;
-    float len = sqrt((width/2)*(width/2) + (height/2)*(height/2));
-//    x = tan(u) * len * sin(M_PI/4);
-//    y = tan(v) * len * sin(M_PI/4);
-//    x = tan(u) * width / 2 + width/2;
-//    y = tan(v) * width / 2 + width/2;
-    
-    x = cos(v) * cos(u) * len;
-    y = cos(v) * sin(u) * len;
-//    z = cos(phi) sin(theta)
-    
-//    if(u < 0) {
-//        y =
-//    }
-//    
-//    x = u / (M_PI / 4) * width;
-//    y = v / (M_PI / 4) * height;
-    
-//    while(x > width) {
-//        x -= width;
-//    }
-//    
-//    while(y > height) {
-//        y -= height;
-//    }
-//    
-//    while(x < 0) {
-//        x += width/2;
-//    }
-    
-//    while(y < 0) {
-//        y += height/2;
-//    }
-//
-    
-//    //apply tranform to x, y
-//    std::vector<float> src;
-//    src.push_back(x);
-//    src.push_back(y);
-//    src.push_back(1);
-//    std::vector<float> res = transform(src, trans);
-//    
-//    // convert new x, y to uv
-//    
-    
-    
 }
 
 void Equirect2Cubic::remapWithMap(cv::Mat& in, cv::Mat& out, int faceId)
