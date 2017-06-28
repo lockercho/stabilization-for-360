@@ -242,7 +242,7 @@ void save_screen( const char *spath )
     free(topdown_pixel);
 }
 
-std::string filename = "walk_short.mp4";
+std::string filename = "11.mp4";
 VideoHandler videoHandler(filename);
 
 
@@ -355,7 +355,7 @@ void getRotationIndex(int faceId, int display_index,
     }
 }
 
-bool needOutput = false;
+bool needOutput = true;
 int display_index = 0;
 void
 TexFunc(void)
@@ -404,6 +404,9 @@ TexFunc(void)
         getRotationIndex(tmpf, display_index-1, &R, j, k);
         
         // TODO: get blended rotation
+        
+        if(R.size() <= j) continue;
+        if(R[j].size() <= k) continue;
         
         Eigen::Quaternion<double> rot = R[j][k];
         
