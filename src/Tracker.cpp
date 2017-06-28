@@ -251,7 +251,7 @@ std::vector<std::vector<Eigen::Quaternion<double> > > Tracker::Track(cv::Mat(&im
     
     std::vector<cv::Mat> rotations;
     
-    std::vector<std::vector<Eigen::Quaternion<double> > > quaternionsRet;// = std::vector<Eigen::Quaternion<double>>();
+    std::vector<std::vector<Eigen::Quaternion<double> > > quaternionsRet;
 
 	frameCount++;
 

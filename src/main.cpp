@@ -325,7 +325,7 @@ int Rmap[8][3] = {
 cv::Mat getBlendedRotation(std::vector<cv::Mat> * R, float u, float v) {
     // 6 rotations cut sphere into 8 areas, 2x4
     int Rmap_index = (int) (u*4) + (v>0.5 ? 4 : 0);
-    if(Rmap_index >=8) Rmap_index-=1;
+    if(Rmap_index >= 8) Rmap_index-=1;
     // get blended
     cv::Mat res = cv::Mat_<double>::zeros(3,3);
     float d = 1000;
@@ -344,8 +344,9 @@ cv::Mat getBlendedRotation(std::vector<cv::Mat> * R, float u, float v) {
     return res; // d;
 }
 
-void getRotationIndex(int faceId, int display_index, std::vector<std::vector<Eigen::Quaternion<double> > > * R, int& j, int& k) {
-    for(j=faceId ;j<R->size() ; j+=6) {
+void getRotationIndex(int faceId, int display_index,
+                      std::vector<std::vector<Eigen::Quaternion<double> > > * R, int& j, int& k) {
+    for(j = faceId ; j < R->size() ; j += 6) {
         if(display_index < R->at(j).size()) {
             k = display_index;
             return;
@@ -361,7 +362,7 @@ TexFunc(void)
 {
     cv::Mat * RGB;
     std::vector<std::vector<Eigen::Quaternion<double> > > R;
-    fprintf(stderr, "display: %d\n", display_index);
+    
     
     if(videoHandler.isFrameOk(display_index)) {
         RGB = videoHandler.getFrame(display_index);
@@ -370,6 +371,7 @@ TexFunc(void)
     } else {
         return ;
     }
+    fprintf(stderr, "display: %d\n", display_index);
     
     glEnable(GL_TEXTURE_2D);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -399,7 +401,7 @@ TexFunc(void)
         coords[i*2+1] = v;
 
         int j, k;
-        getRotationIndex(tmpf, display_index, &R, j, k);
+        getRotationIndex(tmpf, display_index-1, &R, j, k);
         
         // TODO: get blended rotation
         
@@ -412,10 +414,20 @@ TexFunc(void)
         Eigen::Vector3d newp = rot * p;
         newp.coeffRef(0);
         
-        float newu, newv;
-        myTransForm.xy2uv(tmpf, newp.coeffRef(0), newp.coeffRef(1), 256, 256, 1920, 1080, newu, newv);
-//        std::cout << "tmpf: " << tmpf << ", tmpx: "<< tmpx << ", tmpy: " << tmpy<<", newu: " << newu << ", newv: "<< newv;
-//        std::cout << "newX: " << newp.coeffRef(0) << "newY: " << newp.coeffRef(1);
+        float newu, newv, oldu, oldv;
+        int nx = newp.coeffRef(0);
+        int ny = newp.coeffRef(1);
+        if(nx < 0) nx = 0;
+        if(ny < 0) ny = 0;
+        if(nx > 255) nx = 255;
+        if(ny > 255) ny = 255;
+//        myTransForm.xy2uv(tmpf, tmpx, tmpy, 1920, 1080, 256, 256, oldu, oldv);
+        myTransForm.xy2uv(tmpf, nx, ny, 1920, 1080, 256, 256, newu, newv);
+//        std::cout << "tmpf: " << tmpf << ", tmpx: "<< tmpx << ", tmpy: " << tmpy;
+//        std::cout <<", u: " << u << ", v: "<< v;
+//        std::cout <<", oldu: " << oldu << ", oldv: "<< oldv;
+//        std::cout <<", newu: " << newu << ", newv: "<< newv;
+//        std::cout << ", newX: " << nx << ", newY: " << ny;
 //        std::cout <<std::endl;
 //        int a;
 //
