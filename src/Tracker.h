@@ -96,6 +96,8 @@ private:
 	 * \return rotation between keyframe
 	 */
 	opengv::transformation_t GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive);
+    opengv::transformation_t GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive, int frameIndex);
+
     
     /**
      * \brief the 

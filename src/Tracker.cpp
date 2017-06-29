@@ -244,6 +244,135 @@ opengv::transformation_t Tracker::GetKeyframeRotation(std::vector<std::vector<cv
 		return ransac.model_coefficients_;
 	}
 }
+// new one with cubic coordinate (old one is within per image coordinate)
+/**    4
+ * 0 1 2 3
+ *     5
+ * let 2 as front, 1,3 as left, right and so on
+ */
+opengv::transformation_t Tracker::GetKeyframeRotation(std::vector<std::vector<cv::Point2f>> features, int begin, int& end, bool recursive, int frameIndex)
+{
+    // set bearing vector of the features as the normalized [u v 128]
+    bearingVectors_t bearingVectors1;
+    bearingVectors_t bearingVectors2;
+    
+    auto previousFeatures = features.at(begin);
+    auto presentFeatures = features.at(end);
+    
+    auto previousFeaturesCount = previousFeatures.size();
+    auto presentFeaturesCount = presentFeatures.size();
+    
+    auto featuresCount = std::min(previousFeaturesCount, presentFeaturesCount);
+    
+    for (auto p = 0; p < featuresCount; ++p)
+    {
+        Eigen::Vector3d previous(previousFeatures.at(p).x-128, previousFeatures.at(p).y-128, 128);
+        Eigen::Vector3d present(presentFeatures.at(p).x, presentFeatures.at(p).y, 128);
+        Eigen::Vecotr3d temp;
+        
+        // do index swapping to fetch the rotation matrix from same coordinate
+        switch (frameIndex)
+        {
+            case 0: // back
+                previous(0) = previous(0)*(-1);
+                previous(1) = previous(1)*(-1);
+                present(0) = present(0)*(-1);
+                present(1) = present(1)*(-1);
+                break;
+            case 1: // left
+                temp = previous;
+                previous(0) = temp(2)*(-1);
+                previous(2) = temp(0);
+                temp = present;
+                present(0) = temp(2)*(-1);
+                present(2) = temp(0);
+                break;
+            case 2: // front
+                break;
+            case 3: // right
+                temp = previous;
+                previous(0) = temp(2);
+                previous(2) = temp(0);
+                temp = present;
+                present(0) = temp(2);
+                present(2) = temp(0);
+                break;
+            case 4: // top
+                temp = previous;
+                previous(1) = temp(2)*(-1);
+                previous(2) = temp(1);
+                temp = present;
+                present(1) = temp(2)*(-1);
+                present(2) = temp(1);
+                break;
+            case 5: // bot
+                temp = previous;
+                previous(1) = temp(2);
+                previous(2) = temp(1);
+                temp = present;
+                present(1) = temp(2);
+                present(2) = temp(1);
+                break;
+            default:
+                break;
+        }
+        
+        
+        previous = previous / previous.norm();
+        present = present / present.norm();
+        
+        bearingVectors1.push_back(previous);
+        bearingVectors2.push_back(present);
+    }
+    
+    //create a central relative adapter
+    relative_pose::CentralRelativeAdapter adapter(
+                                                  bearingVectors1,
+                                                  bearingVectors2);
+    
+    sac::Ransac<
+    sac_problems::relative_pose::CentralRelativePoseSacProblem> ransac;
+    
+    std::shared_ptr<
+    sac_problems::relative_pose::CentralRelativePoseSacProblem> relposeproblem_ptr(
+                                                                                   new sac_problems::relative_pose::CentralRelativePoseSacProblem(
+                                                                                                                                                  adapter,
+                                                                                                                                                  sac_problems::relative_pose::CentralRelativePoseSacProblem::STEWENIUS));
+    
+    ransac.sac_model_ = relposeproblem_ptr;
+    ransac.threshold_ = 2.0 * (1.0 - cos(atan(sqrt(2.0) * 0.5 / 800.0)));
+    ransac.max_iterations_ = 50;
+    ransac.computeModel();
+    
+    /*** ransac.model_coefficients_ is the result ***/
+    
+    auto inlierRatio = static_cast<double>(ransac.inliers_.size()) / static_cast<double>(featuresCount);
+    
+    if (recursive && inlierRatio < 0.5 && end - begin != 1)
+    {
+        end = begin + ((end - begin) / 2);
+        return GetKeyframeRotation(features, begin, end, recursive);
+    }
+    else
+    {
+        //        plotMatches(prevframes[0], currframes[0], previousFeatures, presentFeatures);
+        //        
+        //        FILE * file = fopen("/Users/lockercho/workspace/GPU/final_project/test/Rs.log", "w");
+        //        
+        //        for(int i=0; i<3; i++) {
+        //            for(int j=0 ; j<3 ; j++) {
+        //                fprintf(file, "%f, ", ransac.model_coefficients_(i, j));
+        //            }
+        //            fprintf(file, "\n");
+        //        }
+        //        fclose(file);
+        //        
+        //        exit(0);
+        
+        
+        return ransac.model_coefficients_;
+    }
+}
 
 std::vector<std::vector<Eigen::Quaternion<double> > > Tracker::Track(cv::Mat(&imgs)[6])
 {
